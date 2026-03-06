@@ -79,6 +79,16 @@ interview/
 | 2026-03-06 | Kafka | 消费者组 & Rebalance（触发/流程/策略/优化）|
 | 2026-03-06 | Kafka | Exactly Once（幂等/事务/read_committed）✅ Kafka模块全部完成 |
 | 2026-03-06 | RocketMQ | 对比Kafka/延迟消息/事务消息/存储原理 ✅ MQ模块全部完成 |
+| 2026-03-06 | Elasticsearch | 核心概念 & 与MySQL对比（Index/Shard/Replica/路由公式）|
+| 2026-03-06 | Elasticsearch | 倒排索引原理（Term Index/FST/Posting List/FOR压缩/分词）|
+| 2026-03-06 | Elasticsearch | 写入流程（Buffer+Translog → Refresh → Flush → Merge）|
+| 2026-03-06 | Elasticsearch | 查询流程（Query Phase广播+全局排序 / Fetch Phase拖取文档 / filter缓存）|
+| 2026-03-06 | Elasticsearch | 相关性评分（TF-IDF原理及缺陷 / BM25两个改进 / function_score干预）|
+| 2026-03-06 | Elasticsearch | 集群架构（节点角色/Master选举Raft/冷热分离/JVM堆32GB/Shard分配策略）|
+| 2026-03-06 | Elasticsearch | 脑裂问题（场景还原/Quorum多数派机制/ES7.x自动计算/专用Master节点）|
+| 2026-03-06 | Elasticsearch | 深分页问题（from+size缺陷/scroll快照/search_after深分页首选/PIT）|
+| 2026-03-06 | Elasticsearch | 性能优化（写入五字诀/查询七字诀/filter缓存/routing/IndexSorting）|
+| 2026-03-06 | Elasticsearch | ES与MySQL双写一致性（同步双写/异步MQ/Canal+Binlog/定时兆底/版本控制）✅ ES模块全部完成 |
 ---
 
 ## 📖 使用说明
@@ -144,7 +154,7 @@ interview/
 
 ---
 
-### 三、📨 消息队列
+### 三、📨 消息队列和中间件
 
 #### 3.1 通用问题 ⭐⭐
 - [x] 为什么用MQ（解耦、削峰、异步）→ [Kafka.md](中间件/Kafka.md#一为什么用mq解耦削峰异步-)
@@ -165,27 +175,55 @@ interview/
 - [x] 延迟消息、事务消息 → [RocketMQ.md](中间件/RocketMQ.md#三延迟消息-)
 - [x] 消息存储原理 → [RocketMQ.md](中间件/RocketMQ.md#五消息存储原理-)
 
+#### 3.4 Elasticsearch ⭐⭐⭐
+- [x] 核心概念 & 与MySQL对比 → [Elasticsearch.md](中间件/Elasticsearch.md#一核心概念--与mysql对比-)
+- [x] 倒排索引原理（Term Dictionary / Posting List / FST）→ [Elasticsearch.md](中间件/Elasticsearch.md#二倒排索引原理-)
+- [x] 写入流程（Buffer→Refresh→Translog→Flush→Merge）→ [Elasticsearch.md](中间件/Elasticsearch.md#三写入流程-)
+- [x] 查询流程（Query Phase & Fetch Phase）→ [Elasticsearch.md](中间件/Elasticsearch.md#四查询流程-)
+- [x] 相关性评分（TF-IDF → BM25）→ [Elasticsearch.md](中间件/Elasticsearch.md#五相关性评分-)
+- [x] 集群架构（Master/Data节点 & 分片路由）→ [Elasticsearch.md](中间件/Elasticsearch.md#六集群架构-)
+- [x] 脑裂问题 & 解决方案 → [Elasticsearch.md](中间件/Elasticsearch.md#七脑裂问题--解决方案-)
+- [x] 深分页问题（from+size / scroll / search_after）→ [Elasticsearch.md](中间件/Elasticsearch.md#八深分页问题--解决方案-)
+- [x] 性能优化（写入优化 & 查询优化）→ [Elasticsearch.md](中间件/Elasticsearch.md#九性能优化-)
+- [x] ES与MySQL双写数据一致性方案 → [Elasticsearch.md](中间件/Elasticsearch.md#十es与mysql双写一致性方案-)
+
 ---
 
-### 四、⚡ 分布式 & 微服务
+### 四、🔧 框架原理
 
-#### 4.1 分布式理论
+#### 4.1 Spring ⭐⭐⭐
+- [ ] IOC原理 & Bean生命周期
+- [ ] AOP原理（动态代理、CGLIB）
+- [ ] 事务原理 & 事务传播行为
+- [ ] 循环依赖如何解决（三级缓存）
+- [ ] Spring Boot自动装配原理
+
+#### 4.2 MyBatis
+- [ ] 一级缓存 & 二级缓存
+- [ ] 动态SQL原理
+- [ ] 插件机制
+
+---
+
+### 五、⚡ 分布式 & 微服务
+
+#### 5.1 分布式理论
 - [ ] CAP & BASE 理论
 - [ ] 一致性协议（Paxos、Raft）
 - [ ] 分布式ID方案（雪花算法、Leaf）
 
-#### 4.2 分布式事务 ⭐⭐
+#### 5.2 分布式事务 ⭐⭐
 - [ ] 2PC / 3PC
 - [ ] TCC 模式
 - [ ] Saga 模式
 - [ ] 消息最终一致性
 
-#### 4.3 分布式锁
+#### 5.3 分布式锁
 - [ ] Redis分布式锁实现
 - [ ] Zookeeper分布式锁
 - [ ] 两种方案对比
 
-#### 4.4 微服务
+#### 5.4 微服务
 - [ ] Spring Cloud 核心组件
 - [ ] Nacos（注册中心 & 配置中心）
 - [ ] 服务熔断（Sentinel vs Hystrix）
@@ -194,15 +232,15 @@ interview/
 
 ---
 
-### 五、🏗️ 架构设计 & 系统设计
+### 六、🏗️ 架构设计 & 系统设计
 
-#### 5.1 高并发方案 ⭐⭐⭐
+#### 6.1 高并发方案 ⭐⭐⭐
 - [ ] 限流（令牌桶、漏桶、滑动窗口）
 - [ ] 熔断 & 降级
 - [ ] 缓存架构设计
 - [ ] 读写分离 & 分库分表
 
-#### 5.2 系统设计题（字节高频）⭐⭐⭐
+#### 6.2 系统设计题（字节高频）⭐⭐⭐
 - [ ] 设计秒杀系统
 - [ ] 设计短链接系统
 - [ ] 设计消息推送系统
@@ -211,26 +249,10 @@ interview/
 - [ ] 设计分布式延迟任务系统
 - [ ] 设计唯一ID生成器
 
-#### 5.3 DDD领域驱动设计
+#### 6.3 DDD领域驱动设计
 - [ ] 聚合根、实体、值对象
 - [ ] 限界上下文
 - [ ] CQRS模式
-
----
-
-### 六、🔧 框架原理
-
-#### 6.1 Spring ⭐⭐⭐
-- [ ] IOC原理 & Bean生命周期
-- [ ] AOP原理（动态代理、CGLIB）
-- [ ] 事务原理 & 事务传播行为
-- [ ] 循环依赖如何解决（三级缓存）
-- [ ] Spring Boot自动装配原理
-
-#### 6.2 MyBatis
-- [ ] 一级缓存 & 二级缓存
-- [ ] 动态SQL原理
-- [ ] 插件机制
 
 ---
 
