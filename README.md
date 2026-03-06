@@ -20,7 +20,8 @@ interview/
 ├── 中间件/
 │   ├── Kafka.md
 │   ├── RocketMQ.md
-│   └── Elasticsearch.md
+│   ├── Elasticsearch.md
+│   └── ZooKeeper.md
 ├── 分布式/
 │   ├── 分布式理论.md
 │   ├── 分布式锁.md
@@ -88,7 +89,9 @@ interview/
 | 2026-03-06 | Elasticsearch | 脑裂问题（场景还原/Quorum多数派机制/ES7.x自动计算/专用Master节点）|
 | 2026-03-06 | Elasticsearch | 深分页问题（from+size缺陷/scroll快照/search_after深分页首选/PIT）|
 | 2026-03-06 | Elasticsearch | 性能优化（写入五字诀/查询七字诀/filter缓存/routing/IndexSorting）|
-| 2026-03-06 | Elasticsearch | ES与MySQL双写一致性（同步双写/异步MQ/Canal+Binlog/定时兆底/版本控制）✅ ES模块全部完成 |
+| 2026-03-06 | Elasticsearch | ES与MySQL双写一致性（同步双写/异步MQ/Canal+Binlog/定时兜底/版本控制）✅ ES模块全部完成 |
+| 2026-03-06 | ZooKeeper | 核心概念/ZAB协议/分布式锁/应用场景/与Nacos对比 |
+| 2026-03-06 | Spring | IOC原理 & Bean生命周期 & 三级缓存循环依赖 |
 ---
 
 ## 📖 使用说明
@@ -187,12 +190,19 @@ interview/
 - [x] 性能优化（写入优化 & 查询优化）→ [Elasticsearch.md](中间件/Elasticsearch.md#九性能优化-)
 - [x] ES与MySQL双写数据一致性方案 → [Elasticsearch.md](中间件/Elasticsearch.md#十es与mysql双写一致性方案-)
 
+#### 3.5 ZooKeeper ⭐⭐⭐
+- [x] 核心概念（节点类型 & Watcher机制）→ [ZooKeeper.md](中间件/ZooKeeper.md#一核心概念-)
+- [x] ZAB协议（Leader选举 & 数据同步）→ [ZooKeeper.md](中间件/ZooKeeper.md#二zab-协议zookeeper-atomic-broadcast-)
+- [x] 分布式锁实现原理（临时顺序节点 vs Redis）→ [ZooKeeper.md](中间件/ZooKeeper.md#三分布式锁实现原理-)
+- [x] 应用场景（注册中心/配置中心/Master选举）→ [ZooKeeper.md](中间件/ZooKeeper.md#四典型应用场景-)
+- [x] 与Nacos/Eureka对比（CP vs AP）→ [ZooKeeper.md](中间件/ZooKeeper.md#五与-nacos--eureka-对比-)
+
 ---
 
 ### 四、🔧 框架原理
 
 #### 4.1 Spring ⭐⭐⭐
-- [ ] IOC原理 & Bean生命周期
+- [x] IOC原理 & Bean生命周期 → [Spring.md](框架/Spring.md#一ioc-原理--bean-生命周期-)
 - [ ] AOP原理（动态代理、CGLIB）
 - [ ] 事务原理 & 事务传播行为
 - [ ] 循环依赖如何解决（三级缓存）
