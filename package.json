@@ -1,0 +1,13 @@
+{
+  "name": "java-interview-kb",
+  "version": "1.0.0",
+  "description": "Java后端工程师面试知识库",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.3"
+  }
+}
