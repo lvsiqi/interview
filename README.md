@@ -92,6 +92,19 @@ interview/
 | 2026-03-06 | Elasticsearch | ES与MySQL双写一致性（同步双写/异步MQ/Canal+Binlog/定时兜底/版本控制）✅ ES模块全部完成 |
 | 2026-03-06 | ZooKeeper | 核心概念/ZAB协议/分布式锁/应用场景/与Nacos对比 |
 | 2026-03-06 | Spring | IOC原理 & Bean生命周期 & 三级缓存循环依赖 |
+| 2026-03-06 | Spring | AOP原理（JDK动态代理 / CGLIB / 代理选择策略 / 事务失效场景）|
+| 2026-03-06 | Spring | 事务原理（AOP+ThreadLocal+JDBC / 7种传播行为 / 8大失效场景）|
+| 2026-03-06 | SpringBoot | 自动装配原理（spring.factories / @Conditional / 自定义Starter）✅ Spring/SpringBoot模块全部完成 |
+| 2026-03-06 | MyBatis | 一级缓存&二级缓存（PerpetualCache/Namespace/Spring整合失效问题）|
+| 2026-03-06 | MyBatis | 动态SQL原理（SqlNode树/OGNL/#{} vs ${}防注入）|
+| 2026-03-06 | MyBatis | 插件机制（JDK代理+责任链/PageHelper分页原理/慢SQL插件）✅ MyBatis模块全部完成 |
+| 2026-03-06 | 分布式理论 | CAP & BASE 理论（CP/AP组件归类 / BASE软状态最终一致）|
+| 2026-03-06 | 分布式理论 | Paxos协议两阶段流程 & Raft选举+日志复制+安全性保证 |
+| 2026-03-06 | 分布式理论 | 分布式ID（64位雪花算法/时钟回拨解决方案/Leaf号段+雪花）✅ 分布式理论模块全部完成 |
+| 2026-03-06 | 分布式事务 | 2PC饰点分析 & 3PC改进 |
+| 2026-03-06 | 分布式事务 | TCC三阶段+空回滚/幂等/悬挂三问题解法 |
+| 2026-03-06 | 分布式事务 | Saga编排vs编制 / 消息最终一致性（本地消息表+RocketMQ事务消息）|
+| 2026-03-06 | 分布式事务 | Seata AT模式+四方案对比选型 ✅ 分布式事务模块全部完成 |
 ---
 
 ## 📖 使用说明
@@ -203,30 +216,30 @@ interview/
 
 #### 4.1 Spring ⭐⭐⭐
 - [x] IOC原理 & Bean生命周期 → [Spring.md](框架/Spring.md#一ioc-原理--bean-生命周期-)
-- [ ] AOP原理（动态代理、CGLIB）
-- [ ] 事务原理 & 事务传播行为
-- [ ] 循环依赖如何解决（三级缓存）
-- [ ] Spring Boot自动装配原理
+- [x] AOP原理（动态代理、CGLIB）→ [Spring.md](框架/Spring.md#二aop-原理-)
+- [x] 事务原理 & 事务传播行为 → [Spring.md](框架/Spring.md#三事务原理--事务传播行为-)
+- [x] 循环依赖如何解决（三级缓存）→ [Spring.md](框架/Spring.md#一ioc-原理--bean-生命周期-)
+- [x] Spring Boot自动装配原理 → [SpringBoot.md](框架/SpringBoot.md#一自动装配原理-)
 
 #### 4.2 MyBatis
-- [ ] 一级缓存 & 二级缓存
-- [ ] 动态SQL原理
-- [ ] 插件机制
+- [x] 一级缓存 & 二级缓存 → [MyBatis.md](框架/MyBatis.md#一一级缓存--二级缓存-)
+- [x] 动态SQL原理（SqlNode树 / OGNL / #{} vs ${}）→ [MyBatis.md](框架/MyBatis.md#二动态-sql-原理-)
+- [x] 插件机制（JDK代理+责任链 / PageHelper原理）→ [MyBatis.md](框架/MyBatis.md#三插件机制interceptor-)
 
 ---
 
 ### 五、⚡ 分布式 & 微服务
 
 #### 5.1 分布式理论
-- [ ] CAP & BASE 理论
-- [ ] 一致性协议（Paxos、Raft）
-- [ ] 分布式ID方案（雪花算法、Leaf）
+- [x] CAP & BASE 理论 → [分布式理论.md](分布式/分布式理论.md#一cap-理论--base-理论-)
+- [x] 一致性协议（Paxos、Raft）→ [分布式理论.md](分布式/分布式理论.md#二一致性协议应用场景-)
+- [x] 分布式ID方案（雪花算法、Leaf）→ [分布式理论.md](分布式/分布式理论.md#三分布式-id-方案-)
 
 #### 5.2 分布式事务 ⭐⭐
-- [ ] 2PC / 3PC
-- [ ] TCC 模式
-- [ ] Saga 模式
-- [ ] 消息最终一致性
+- [x] 2PC / 3PC → [分布式事务.md](分布式/分布式事务.md#二2pc两阶段提交-)
+- [x] TCC 模式 → [分布式事务.md](分布式/分布式事务.md#三tcc试-confirm-cancel-)
+- [x] Saga 模式 → [分布式事务.md](分布式/分布式事务.md#四saga-模式-)
+- [x] 消息最终一致性 → [分布式事务.md](分布式/分布式事务.md#五消息最终一致性-)
 
 #### 5.3 分布式锁
 - [ ] Redis分布式锁实现
