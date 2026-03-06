@@ -7,105 +7,46 @@
 
 ## 📁 目录结构
 
-```
-interview/
-├── README.md                    # 知识库导航（含全景提纲）
-├── Java核心/
-│   ├── 并发编程.md
-│   ├── JVM.md
-│   └── 集合框架.md
-├── 数据库/
-│   ├── MySQL.md
-│   └── Redis.md
-├── 中间件/
-│   ├── Kafka.md
-│   ├── RocketMQ.md
-│   ├── Elasticsearch.md
-│   └── ZooKeeper.md
-├── 分布式/
-│   ├── 分布式理论.md
-│   ├── 分布式锁.md
-│   └── 分布式事务.md
-├── 架构设计/
-│   ├── 微服务架构.md
-│   ├── 系统设计题.md
-│   └── 高并发方案.md
-├── 框架/
-│   ├── Spring.md
-│   ├── SpringBoot.md
-│   └── MyBatis.md
-└── 面试题汇总/
-    ├── 每日一题.md
-    └── 高频题精选.md
-```
+| 文件 | 说明 |
+|------|------|
+| [README.md](README.md) | 知识库导航（含全景提纲） |
+| **Java核心/** | |
+| [Java核心/JVM.md](Java核心/JVM.md) | 内存模型、类加载、GC算法、垃圾收集器、调优 |
+| [Java核心/并发编程.md](Java核心/并发编程.md) | synchronized、volatile、AQS、线程池、ConcurrentHashMap |
+| [Java核心/集合框架.md](Java核心/集合框架.md) | HashMap、ArrayList、CopyOnWriteArrayList |
+| **数据库/** | |
+| [数据库/MySQL.md](数据库/MySQL.md) | 索引、MVCC、锁机制、SQL优化、主从、分库分表 |
+| [数据库/Redis.md](数据库/Redis.md) | 数据结构、持久化、淘汰策略、集群、分布式锁 |
+| **中间件/** | |
+| [中间件/Kafka.md](中间件/Kafka.md) | 架构原理、分区副本、高性能、消费者组、Exactly Once |
+| [中间件/RocketMQ.md](中间件/RocketMQ.md) | 对比Kafka、延迟消息、事务消息、存储原理 |
+| [中间件/Elasticsearch.md](中间件/Elasticsearch.md) | 倒排索引、写入/查询流程、集群、脑裂、深分页 |
+| [中间件/ZooKeeper.md](中间件/ZooKeeper.md) | ZAB协议、Session、分布式锁Curator、Nacos/etcd对比 |
+| **分布式/** | |
+| [分布式/分布式理论.md](分布式/分布式理论.md) | CAP/BASE、Paxos、Raft、分布式ID |
+| [分布式/分布式事务.md](分布式/分布式事务.md) | 2PC/3PC、TCC、Saga、消息最终一致性、Seata |
+| [分布式/分布式锁.md](分布式/分布式锁.md) | Redis锁、ZK锁、Redisson、RedLock对比 |
+| **架构设计/** | |
+| [架构设计/高并发方案.md](架构设计/高并发方案.md) | 限流算法、熔断降级、多级缓存、读写分离 |
+| [架构设计/微服务架构.md](架构设计/微服务架构.md) | Spring Cloud、Nacos、Sentinel、Gateway、服务拆分 |
+| [架构设计/系统设计题.md](架构设计/系统设计题.md) | 秒杀/短链/推送/Feed流/延迟任务/唯一ID（7题）|
+| [架构设计/DDD领域驱动设计.md](架构设计/DDD领域驱动设计.md) | 聚合根/限界上下文/CQRS/事件溯源 |
+| **框架/** | |
+| [框架/Spring.md](框架/Spring.md) | IOC、AOP、事务原理、三级缓存循环依赖 |
+| [框架/SpringBoot.md](框架/SpringBoot.md) | 自动装配原理、@Conditional、自定义Starter |
+| [框架/MyBatis.md](框架/MyBatis.md) | 缓存机制、动态SQL、插件原理、PageHelper |
+| **根目录（跨章节文件）** | |
+| [网络与操作系统.md](网络与操作系统.md) | TCP、HTTP/HTTPS、零拷贝、IO模型、Reactor、Epoll |
+| [算法与数据结构.md](算法与数据结构.md) | 链表/树/DP/回溯/排序/滑动窗口/图论（7专题）|
+| [场景题与故障排查.md](场景题与故障排查.md) | CPU飙高/OOM/超时/慢查询/缓存一致性（5专题）|
+| [HR与软技能.md](HR与软技能.md) | STAR法则、冲突处理、职业规划、反问环节 |
+| **面试题汇总/** | |
+| [面试题汇总/高频题精选.md](面试题汇总/高频题精选.md) | 32道跨章节高频题（JVM/并发/MySQL/Redis/分布式/系统设计/算法/场景题/HR）含核心答案+追问方向 |
+| [面试题汇总/每日一题.md](面试题汇总/每日一题.md) | 按日期刷题记录 |
 
 ---
 
-## 🔥 最近更新
 
-| 日期 | 分类 | 内容 |
-|------|------|------|
-| 2026-03-05 | Java并发 | synchronized 底层原理 & 锁升级 |
-| 2026-03-05 | Java并发 | volatile 原理 & 内存屏障 |
-| 2026-03-05 | Java并发 | AQS原理 & ReentrantLock |
-| 2026-03-05 | Java并发 | ThreadLocal原理 & 内存泄漏 |
-| 2026-03-05 | Java并发 | 线程池核心原理 & 参数调优 |
-| 2026-03-05 | Java并发 | ConcurrentHashMap 原理 |
-| 2026-03-05 | Java并发 | happens-before 规则 |
-| 2026-03-05 | JVM | JVM内存模型 |
-| 2026-03-05 | JVM | 类加载机制 & 双亲委派 |
-| 2026-03-05 | JVM | GC算法 & 垃圾收集器 |
-| 2026-03-05 | JVM | JVM调优参数 & OOM排查 |
-| 2026-03-05 | 集合框架 | HashMap 源码分析 |
-| 2026-03-05 | 集合框架 | ArrayList vs LinkedList & CopyOnWriteArrayList |
-| 2026-03-05 | MySQL | 索引原理（B+树、聚簇索引、覆盖索引） |
-| 2026-03-05 | MySQL | 索引失效场景 & EXPLAIN解读 |
-| 2026-03-05 | MySQL | 事务隔离级别 & MVCC原理 |
-| 2026-03-05 | MySQL | Buffer Pool & Change Buffer & redo/undo/binlog |
-| 2026-03-05 | MySQL | 锁机制（行锁、间隙锁、意向锁） |
-| 2026-03-05 | MySQL | SQL优化 & Explain解读 |
-| 2026-03-05 | MySQL | 主从复制原理 |
-| 2026-03-05 | MySQL | 分库分表方案 ✅ MySQL模块全部完成 |
-| 2026-03-06 | Redis | 数据结构 & 底层实现 |
-| 2026-03-06 | Redis | 持久化（RDB / AOF / 混合）|
-| 2026-03-06 | Redis | 内存淘汰策略（8种策略 / LRU vs LFU）|
-| 2026-03-06 | Redis | 缓存穿透/击穿/雪崩 & 缓存与DB一致性 |
-| 2026-03-06 | Redis | 集群方案（主从/哨兵/Cluster） |
-| 2026-03-06 | Redis | 分布式锁（Redisson看门狗 / RedLock / vs ZK） |
-| 2026-03-06 | Redis | 热Key & 大Key问题 |
-| 2026-03-06 | Redis | 事务 & Pipeline & Lua脚本 ✅ Redis模块全部完成 |
-| 2026-03-06 | MQ通用 | 为什么用MQ / 消息可靠性 / 幂等 / 顺序消费 / 积压处理 || 2026-03-06 | Kafka | 架构原理（Topic/Partition/ISR/acks）|
-| 2026-03-06 | Kafka | 分区机制 & 副本机制（ISR/OSR/HW/LEO）|
-| 2026-03-06 | Kafka | 高性能原因（顺序写/PageCache/零拷贝/批量/压缩）|
-| 2026-03-06 | Kafka | 消费者组 & Rebalance（触发/流程/策略/优化）|
-| 2026-03-06 | Kafka | Exactly Once（幂等/事务/read_committed）✅ Kafka模块全部完成 |
-| 2026-03-06 | RocketMQ | 对比Kafka/延迟消息/事务消息/存储原理 ✅ MQ模块全部完成 |
-| 2026-03-06 | Elasticsearch | 核心概念 & 与MySQL对比（Index/Shard/Replica/路由公式）|
-| 2026-03-06 | Elasticsearch | 倒排索引原理（Term Index/FST/Posting List/FOR压缩/分词）|
-| 2026-03-06 | Elasticsearch | 写入流程（Buffer+Translog → Refresh → Flush → Merge）|
-| 2026-03-06 | Elasticsearch | 查询流程（Query Phase广播+全局排序 / Fetch Phase拖取文档 / filter缓存）|
-| 2026-03-06 | Elasticsearch | 相关性评分（TF-IDF原理及缺陷 / BM25两个改进 / function_score干预）|
-| 2026-03-06 | Elasticsearch | 集群架构（节点角色/Master选举Raft/冷热分离/JVM堆32GB/Shard分配策略）|
-| 2026-03-06 | Elasticsearch | 脑裂问题（场景还原/Quorum多数派机制/ES7.x自动计算/专用Master节点）|
-| 2026-03-06 | Elasticsearch | 深分页问题（from+size缺陷/scroll快照/search_after深分页首选/PIT）|
-| 2026-03-06 | Elasticsearch | 性能优化（写入五字诀/查询七字诀/filter缓存/routing/IndexSorting）|
-| 2026-03-06 | Elasticsearch | ES与MySQL双写一致性（同步双写/异步MQ/Canal+Binlog/定时兜底/版本控制）✅ ES模块全部完成 |
-| 2026-03-06 | ZooKeeper | 核心概念/ZAB协议/分布式锁/应用场景/与Nacos对比 |
-| 2026-03-06 | Spring | IOC原理 & Bean生命周期 & 三级缓存循环依赖 |
-| 2026-03-06 | Spring | AOP原理（JDK动态代理 / CGLIB / 代理选择策略 / 事务失效场景）|
-| 2026-03-06 | Spring | 事务原理（AOP+ThreadLocal+JDBC / 7种传播行为 / 8大失效场景）|
-| 2026-03-06 | SpringBoot | 自动装配原理（spring.factories / @Conditional / 自定义Starter）✅ Spring/SpringBoot模块全部完成 |
-| 2026-03-06 | MyBatis | 一级缓存&二级缓存（PerpetualCache/Namespace/Spring整合失效问题）|
-| 2026-03-06 | MyBatis | 动态SQL原理（SqlNode树/OGNL/#{} vs ${}防注入）|
-| 2026-03-06 | MyBatis | 插件机制（JDK代理+责任链/PageHelper分页原理/慢SQL插件）✅ MyBatis模块全部完成 |
-| 2026-03-06 | 分布式理论 | CAP & BASE 理论（CP/AP组件归类 / BASE软状态最终一致）|
-| 2026-03-06 | 分布式理论 | Paxos协议两阶段流程 & Raft选举+日志复制+安全性保证 |
-| 2026-03-06 | 分布式理论 | 分布式ID（64位雪花算法/时钟回拨解决方案/Leaf号段+雪花）✅ 分布式理论模块全部完成 |
-| 2026-03-06 | 分布式事务 | 2PC饰点分析 & 3PC改进 |
-| 2026-03-06 | 分布式事务 | TCC三阶段+空回滚/幂等/悬挂三问题解法 |
-| 2026-03-06 | 分布式事务 | Saga编排vs编制 / 消息最终一致性（本地消息表+RocketMQ事务消息）|
-| 2026-03-06 | 分布式事务 | Seata AT模式+四方案对比选型 ✅ 分布式事务模块全部完成 |
----
 
 ## 📖 使用说明
 
@@ -204,11 +145,12 @@ interview/
 - [x] ES与MySQL双写数据一致性方案 → [Elasticsearch.md](中间件/Elasticsearch.md#十es与mysql双写一致性方案-)
 
 #### 3.5 ZooKeeper ⭐⭐⭐
-- [x] 核心概念（节点类型 & Watcher机制）→ [ZooKeeper.md](中间件/ZooKeeper.md#一核心概念-)
-- [x] ZAB协议（Leader选举 & 数据同步）→ [ZooKeeper.md](中间件/ZooKeeper.md#二zab-协议zookeeper-atomic-broadcast-)
-- [x] 分布式锁实现原理（临时顺序节点 vs Redis）→ [ZooKeeper.md](中间件/ZooKeeper.md#三分布式锁实现原理-)
-- [x] 应用场景（注册中心/配置中心/Master选举）→ [ZooKeeper.md](中间件/ZooKeeper.md#四典型应用场景-)
-- [x] 与Nacos/Eureka对比（CP vs AP）→ [ZooKeeper.md](中间件/ZooKeeper.md#五与-nacos--eureka-对比-)
+- [x] 核心概念（节点类型 / Session心跳机制 / Watcher推拉模型）→ [ZooKeeper.md](中间件/ZooKeeper.md#一核心概念-)
+- [x] ZAB协议（ZXID结构 / 消息广播 / Leader选举 / DIFF•SNAP•TRUNC三种同步模式）→ [ZooKeeper.md](中间件/ZooKeeper.md#二zab-协议zookeeper-atomic-broadcast-)
+- [x] ZAB vs Raft 对比 → [ZooKeeper.md](中间件/ZooKeeper.md#28-zab-vs-raft-对比字节爱问)
+- [x] 分布式锁（临时顺序节点原理 + Curator代码 / ZK vs Redis锁对比）→ [ZooKeeper.md](中间件/ZooKeeper.md#三分布式锁实现原理-)
+- [x] 应用场景（服务注册/配置中心/Master选举/分布式屏障Barrier）→ [ZooKeeper.md](中间件/ZooKeeper.md#四典型应用场景-)
+- [x] 与Nacos/Eureka/etcd对比（CP vs AP / 为何不适合做注册中心）→ [ZooKeeper.md](中间件/ZooKeeper.md#五与-nacos--eureka--etcd-对比-)
 
 ---
 
@@ -242,83 +184,100 @@ interview/
 - [x] 消息最终一致性 → [分布式事务.md](分布式/分布式事务.md#五消息最终一致性-)
 
 #### 5.3 分布式锁
-- [ ] Redis分布式锁实现
-- [ ] Zookeeper分布式锁
-- [ ] 两种方案对比
+- [x] Redis分布式锁实现（SET NX PX + Lua脚本）→ [分布式锁.md](分布式/分布式锁.md#二redis-分布式锁-)
+- [x] Redisson看门狗 & 可重入锁 → [分布式锁.md](分布式/分布式锁.md#二redis-分布式锁-)
+- [x] ZooKeeper分布式锁（临时顺序节点）→ [分布式锁.md](分布式/分布式锁.md#三zookeeper-分布式锁-)
+- [x] 两种方案对比 → [分布式锁.md](分布式/分布式锁.md#四redis-vs-zookeeper-分布式锁对比-)
 
 #### 5.4 微服务
-- [ ] Spring Cloud 核心组件
-- [ ] Nacos（注册中心 & 配置中心）
-- [ ] 服务熔断（Sentinel vs Hystrix）
-- [ ] 网关（Gateway原理）
-- [ ] 服务拆分原则
+- [x] Spring Cloud 核心组件 → [微服务架构.md](架构设计/微服务架构.md#一spring-cloud-核心组件全景-)
+- [x] Nacos（注册中心 & 配置中心）→ [微服务架构.md](架构设计/微服务架构.md#二nacos-注册中心原理-)
+- [x] 服务熬断（Sentinel vs Hystrix）→ [微服务架构.md](架构设计/微服务架构.md#四sentinel-熬断降级-)
+- [x] 网关（Gateway原理）→ [微服务架构.md](架构设计/微服务架构.md#五spring-cloud-gateway-原理-)
+- [x] 服务拆分原则 → [微服务架构.md](架构设计/微服务架构.md#七服务拆分原则-)
 
 ---
 
 ### 六、🏗️ 架构设计 & 系统设计
 
 #### 6.1 高并发方案 ⭐⭐⭐
-- [ ] 限流（令牌桶、漏桶、滑动窗口）
-- [ ] 熔断 & 降级
-- [ ] 缓存架构设计
-- [ ] 读写分离 & 分库分表
+- [x] 限流（令牌桶、漏桶、滑动窗口）→ [高并发方案.md](架构设计/高并发方案.md#一限流算法-)
+- [x] 熬断 & 降级 → [高并发方案.md](架构设计/高并发方案.md#二熬断--降级-)
+- [x] 缓存架构设计 → [高并发方案.md](架构设计/高并发方案.md#三缓存架构设计-)
+- [x] 读写分离 & 分库分表 → [高并发方案.md](架构设计/高并发方案.md#四读写分离--分库分表-)
 
 #### 6.2 系统设计题（字节高频）⭐⭐⭐
-- [ ] 设计秒杀系统
-- [ ] 设计短链接系统
-- [ ] 设计消息推送系统
-- [ ] 设计评论系统
-- [ ] 设计朋友圈/Feed流系统
-- [ ] 设计分布式延迟任务系统
-- [ ] 设计唯一ID生成器
+- [x] 设计秒杀系统 → [系统设计题.md](架构设计/系统设计题.md#一设计秒杀系统-)
+- [x] 设计短链接系统 → [系统设计题.md](架构设计/系统设计题.md#二设计短链接系统)
+- [x] 设计消息推送系统 → [系统设计题.md](架构设计/系统设计题.md#三设计消息推送系统)
+- [x] 设计评论系统 → [系统设计题.md](架构设计/系统设计题.md#四设计评论系统)
+- [x] 设计朋友圈/Feed流系统 → [系统设计题.md](架构设计/系统设计题.md#五设计朋友圈--feed-流系统)
+- [x] 设计分布式延迟任务系统 → [系统设计题.md](架构设计/系统设计题.md#六设计分布式延迟任务系统)
+- [x] 设计唯一ID生成器 → [系统设计题.md](架构设计/系统设计题.md#七设计唯一-id-生成器)
 
 #### 6.3 DDD领域驱动设计
-- [ ] 聚合根、实体、值对象
-- [ ] 限界上下文
-- [ ] CQRS模式
+- [x] 聚合根、实体、值对象 → [DDD领域驱动设计.md](架构设计/DDD领域驱动设计.md#一聚合根实体值对象)
+- [x] 限界上下文 → [DDD领域驱动设计.md](架构设计/DDD领域驱动设计.md#二限界上下文)
+- [x] CQRS模式 → [DDD领域驱动设计.md](架构设计/DDD领域驱动设计.md#三cqrs-模式)
 
 ---
 
 ### 七、🌐 网络 & 操作系统
 
-- [ ] TCP三次握手、四次挥手
-- [ ] TCP可靠性保证
-- [ ] HTTP vs HTTPS
-- [ ] 零拷贝原理
-- [ ] IO模型（BIO/NIO/AIO）
-- [ ] Epoll原理
-- [ ] Linux常用排查命令
+- [x] TCP三次握手、四次挥手 → [网络与操作系统.md](网络与操作系统.md#一tcp-三次握手--四次挥手)
+- [x] TCP可靠性保证 → [网络与操作系统.md](网络与操作系统.md#二tcp-可靠性保证)
+- [x] HTTP vs HTTPS → [网络与操作系统.md](网络与操作系统.md#三http-vs-https)
+- [x] 零拷贝原理 → [网络与操作系统.md](网络与操作系统.md#四零拷贝原理)
+- [x] IO模型（BIO/NIO/AIO）→ [网络与操作系统.md](网络与操作系统.md#五io-模型bio--nio--aio)
+- [x] Epoll原理 → [网络与操作系统.md](网络与操作系统.md#六epoll-原理)
+- [x] Linux常用排查命令 → [网络与操作系统.md](网络与操作系统.md#七linux-常用排查命令)
 
 ---
 
 ### 八、💻 算法 & 数据结构（字节重点）⭐⭐⭐
 
-- [ ] 数组、链表、栈、队列
-- [ ] 二叉树（遍历、BST、红黑树）
-- [ ] 动态规划
-- [ ] 回溯算法
-- [ ] 排序算法（手写快排、归并）
-- [ ] 滑动窗口、双指针
-- [ ] 图论基础（BFS/DFS）
+- [x] 数组、链表、栈、队列 → [算法与数据结构.md](算法与数据结构.md#一数组链表栈队列)
+- [x] 二叉树（遍历、BST、红黑树）→ [算法与数据结构.md](算法与数据结构.md#二二叉树)
+- [x] 动态规划 → [算法与数据结构.md](算法与数据结构.md#三动态规划)
+- [x] 回溯算法 → [算法与数据结构.md](算法与数据结构.md#四回溯算法)
+- [x] 排序算法（手写快排、归并）→ [算法与数据结构.md](算法与数据结构.md#五排序算法)
+- [x] 滑动窗口、双指针 → [算法与数据结构.md](算法与数据结构.md#六滑动窗口--双指针)
+- [x] 图论基础（BFS/DFS）→ [算法与数据结构.md](算法与数据结构.md#七图论基础bfs--dfs)
 
 ---
 
 ### 九、🔍 场景题 & 故障排查
 
-- [ ] 线上CPU飙高如何排查
-- [ ] 内存溢出如何排查
-- [ ] 接口超时如何排查
-- [ ] 数据库慢查询优化
-- [ ] 缓存与数据库数据一致性
+- [x] 线上CPU飙高如何排查 → [场景题与故障排查.md](场景题与故障排查.md#一线上-cpu-飙高如何排查)
+- [x] 内存溢出如何排查 → [场景题与故障排查.md](场景题与故障排查.md#二内存溢出如何排查)
+- [x] 接口超时如何排查 → [场景题与故障排查.md](场景题与故障排查.md#三接口超时如何排查)
+- [x] 数据库慢查询优化 → [场景题与故障排查.md](场景题与故障排查.md#四数据库慢查询优化)
+- [x] 缓存与数据库数据一致性 → [场景题与故障排查.md](场景题与故障排查.md#五缓存与数据库数据一致性)
 
 ---
 
 ### 十、🎤 HR & 软技能
 
-- [ ] 项目难点 & 亮点提炼
-- [ ] 团队协作冲突处理
-- [ ] 职业规划
-- [ ] 反问环节
+- [x] 项目难点 & 亮点提炼 → [HR与软技能.md](HR与软技能.md#一项目难点--亮点提炼)
+- [x] 团队协作冲突处理 → [HR与软技能.md](HR与软技能.md#二团队协作--冲突处理)
+- [x] 职业规划 → [HR与软技能.md](HR与软技能.md#三职业规划)
+- [x] 反问环节 → [HR与软技能.md](HR与软技能.md#四反问环节)
+
+---
+
+### 🔥 面试题汇总（冲刺速查）
+
+- [x] 高频题精选（32题，含核心答案+追问） → [高频题精选.md](面试题汇总/高频题精选.md)
+  - Java核心：JVM内存/类加载/GC/锁升级/volatile/AQS/线程池/ConcurrentHashMap/HashMap（Q1-Q10）
+  - 数据库：B+树/MVCC/索引失效/redo-undo-binlog/Redis为什么快/持久化/缓存三大问题（Q11-Q17）
+  - 消息队列：Kafka高吞吐/顺序消费（Q18-Q19）
+  - 分布式：CAP/分布式事务选型/Raft选举（Q20-Q22）
+  - 系统设计：秒杀/分布式锁（Q23-Q24）
+  - 网络：TCP握手/epoll（Q25-Q26）
+  - 算法：快排/DP框架（Q27-Q28）
+  - 场景题：CPU飙高/接口超时（Q29-Q30）
+  - HR：缺点回答/离职原因（Q31-Q32）
+- [ ] 每日一题 → [每日一题.md](面试题汇总/每日一题.md)
 
 ---
 
