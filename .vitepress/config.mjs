@@ -21,7 +21,8 @@ export default defineConfig({
         items: [
           { text: 'JVM', link: '/Java核心/JVM' },
           { text: '并发编程', link: '/Java核心/并发编程' },
-          { text: '集合框架', link: '/Java核心/集合框架' }
+          { text: '集合框架', link: '/Java核心/集合框架' },
+          { text: 'Java新特性', link: '/Java核心/Java新特性' }
         ]
       },
       {
@@ -37,7 +38,8 @@ export default defineConfig({
           { text: 'Kafka', link: '/中间件/Kafka' },
           { text: 'RocketMQ', link: '/中间件/RocketMQ' },
           { text: 'Elasticsearch', link: '/中间件/Elasticsearch' },
-          { text: 'ZooKeeper', link: '/中间件/ZooKeeper' }
+          { text: 'ZooKeeper', link: '/中间件/ZooKeeper' },
+          { text: 'Netty', link: '/中间件/Netty' }
         ]
       },
       {
@@ -65,6 +67,18 @@ export default defineConfig({
           { text: 'MyBatis', link: '/框架/MyBatis' }
         ]
       },
+      {
+        text: '其他专题',
+        items: [
+          { text: '网络与操作系统', link: '/其他专题/网络与操作系统' },
+          { text: '算法与数据结构', link: '/其他专题/算法与数据结构' },
+          { text: '场景题与故障排查', link: '/其他专题/场景题与故障排查' },
+          { text: '设计模式', link: '/其他专题/设计模式' },
+          { text: 'HR与软技能', link: '/其他专题/HR与软技能' },
+          { text: 'Web安全', link: '/其他专题/安全' },
+          { text: '云原生与K8s', link: '/其他专题/云原生与K8s' }
+        ]
+      },
       { text: '高频题精选', link: '/面试题汇总/高频题精选' }
     ],
 
@@ -90,7 +104,8 @@ export default defineConfig({
         items: [
           { text: 'JVM 虚拟机', link: '/Java核心/JVM' },
           { text: '并发编程', link: '/Java核心/并发编程' },
-          { text: '集合框架', link: '/Java核心/集合框架' }
+          { text: '集合框架', link: '/Java核心/集合框架' },
+          { text: 'Java新特性', link: '/Java核心/Java新特性' }
         ]
       },
       {
@@ -108,7 +123,8 @@ export default defineConfig({
           { text: 'Kafka', link: '/中间件/Kafka' },
           { text: 'RocketMQ', link: '/中间件/RocketMQ' },
           { text: 'Elasticsearch', link: '/中间件/Elasticsearch' },
-          { text: 'ZooKeeper', link: '/中间件/ZooKeeper' }
+          { text: 'ZooKeeper', link: '/中间件/ZooKeeper' },
+          { text: 'Netty', link: '/中间件/Netty' }
         ]
       },
       {
@@ -143,10 +159,13 @@ export default defineConfig({
         text: '📚 其他专题',
         collapsed: false,
         items: [
-          { text: '网络与操作系统', link: '/网络与操作系统' },
-          { text: '算法与数据结构', link: '/算法与数据结构' },
-          { text: '场景题与故障排查', link: '/场景题与故障排查' },
-          { text: 'HR与软技能', link: '/HR与软技能' }
+          { text: '网络与操作系统', link: '/其他专题/网络与操作系统' },
+          { text: '算法与数据结构', link: '/其他专题/算法与数据结构' },
+          { text: '场景题与故障排查', link: '/其他专题/场景题与故障排查' },
+          { text: '设计模式', link: '/其他专题/设计模式' },
+          { text: 'HR与软技能', link: '/其他专题/HR与软技能' },
+          { text: '🔐 Web安全', link: '/其他专题/安全' },
+          { text: '☁️ 云原生与K8s', link: '/其他专题/云原生与K8s' }
         ]
       }
     ],

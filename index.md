@@ -46,13 +46,33 @@ features:
   - icon: 🌍
     title: 网络与操作系统
     details: TCP三次握手/四次挥手、HTTP/HTTPS、零拷贝、IO模型、Reactor/Epoll原理
-    link: /网络与操作系统
+    link: /其他专题/网络与操作系统
   - icon: 🧮
     title: 算法与数据结构
     details: 链表、树、动态规划、回溯、排序算法、滑动窗口、图论等7大专题
-    link: /算法与数据结构
+    link: /其他专题/算法与数据结构
   - icon: 🔥
     title: 场景题与故障排查
     details: CPU飙高、OOM定位、接口超时、慢查询优化、缓存一致性方案实战
-    link: /场景题与故障排查
+    link: /其他专题/场景题与故障排查
+  - icon: 🧩
+    title: 设计模式
+    details: 创建型/结构型/行为型9大模式，单例/工厂/代理/策略/观察者/责任链，结合Spring/Netty框架应用场景
+    link: /其他专题/设计模式
+  - icon: ⚡
+    title: Netty
+    details: Reactor线程模型、Channel/Pipeline/ByteBuf核心组件、粘包拆包、心跳机制、零拷贝原理
+    link: /中间件/Netty
+  - icon: 🆕
+    title: Java新特性
+    details: Java 8~21全览：Lambda/Stream/Optional、Record/Sealed Class/文本块、虚拟线程、模式匹配
+    link: /Java核心/Java新特性
+  - icon: 🔐
+    title: Web安全
+    details: JWT/OAuth2/Spring Security认证鉴权、SQL注入/XSS/CSRF/SSRF漏洞防御、HTTPS/TLS原理、OWASP Top 10、接口安全设计
+    link: /其他专题/安全
+  - icon: ☁️
+    title: 云原生与K8s
+    details: Docker容器原理(Namespace/Cgroups/OverlayFS)、Kubernetes架构与调度机制、核心资源对象、存储/网络/HPA/Service Mesh(Istio)
+    link: /其他专题/云原生与K8s
 ---

@@ -148,6 +148,219 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 自定义 Starter：xxx-spring-boot-starter（如 mybatis-spring-boot-starter）
 ```
 
+**目录结构（最小化）：**
+```
+my-spring-boot-starter/
+  src/main/java/
+    com/example/MyService.java             ← 核心功能类
+    com/example/MyAutoConfiguration.java  ← 自动配置类
+    com/example/MyProperties.java         ← 配置属性绑定
+  src/main/resources/
+    META-INF/spring.factories             ← 注册自动配置类（Boot 2.x）
+    META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports（Boot 3.x）
+```
+
+```java
+// 1. 属性类
+@ConfigurationProperties(prefix = "my.service")
+public class MyProperties {
+    private String url = "http://default";
+    // getter/setter...
+}
+
+// 2. 自动配置类
+@Configuration
+@ConditionalOnClass(MyService.class)
+@EnableConfigurationProperties(MyProperties.class)
+public class MyAutoConfiguration {
+    @Bean
+    @ConditionalOnMissingBean
+    public MyService myService(MyProperties props) {
+        return new MyService(props.getUrl());
+    }
+}
+```
+
+---
+
+## 二、配置体系 ⭐⭐⭐
+
+### 2.1 配置文件优先级（从高到低）
+
+```
+① 命令行参数：--server.port=8081（最高优先级）
+② Java系统属性：-Dserver.port=8081
+③ 操作系统环境变量：SERVER_PORT=8081
+④ jar 包外 application-{profile}.yml（同目录 config/ 子目录）
+⑤ jar 包内 application-{profile}.yml（resources/）
+⑥ jar 包外 application.yml
+⑦ jar 包内 application.yml（最低，默认配置）
+```
+
+> **规律**：外部 > 内部，命令行 > 环境变量 > 配置文件；Profile 配置覆盖默认配置
+
+### 2.2 多环境配置（Profile）
+
+```yaml
+# application.yml（主配置，激活Profile）
+spring:
+  profiles:
+    active: dev   # 或通过命令行 --spring.profiles.active=prod
+
+---
+# application-dev.yml
+server:
+  port: 8080
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/dev_db
+
+---
+# application-prod.yml
+server:
+  port: 80
+spring:
+  datasource:
+    url: jdbc:mysql://prod-db:3306/prod_db
+```
+
+### 2.3 配置绑定方式
+
+```java
+// 推荐：@ConfigurationProperties（类型安全，支持复杂对象、集合、校验）
+@ConfigurationProperties(prefix = "app.datasource")
+@Validated
+public class DataSourceProperties {
+    @NotBlank
+    private String url;
+    private int maxPoolSize = 10;
+    // getter/setter...
+}
+
+// @Value：适合单个简单值
+@Value("${app.name:defaultName}")   // 支持默认值
+private String appName;
+```
+
+---
+
+## 三、SpringBoot 启动流程 ⭐⭐⭐⭐
+
+```
+① new SpringApplication(primarySource)
+   - 推断应用类型（Servlet / Reactive / None）
+   - 加载 META-INF/spring.factories 中的
+     ApplicationContextInitializer、ApplicationListener
+
+② SpringApplication.run()
+   ③ 创建并启动 StopWatch（计时）
+   ④ 获取并启动 SpringApplicationRunListeners（发布 starting 事件）
+   ⑤ 准备 Environment（加载配置文件、处理命令行参数）
+   ⑥ 打印 Banner
+   ⑦ 创建 ApplicationContext（Servlet → AnnotationConfigServletWebServerApplicationContext）
+   ⑧ 准备 ApplicationContext：
+      - applyInitializers（调用所有 ApplicationContextInitializer）
+      - load（将主类注册为 BeanDefinition）
+   ⑨ refreshContext（核心！）：
+      - invokeBeanFactoryPostProcessors → 扫描包 + 读取自动配置类
+      - onRefresh → 启动内嵌 Tomcat/Jetty/Undertow 
+      - finishBeanFactoryInitialization → 实例化所有单例 Bean
+   ⑩ callRunners（执行 ApplicationRunner / CommandLineRunner）
+   ⑪ 发布 ApplicationReadyEvent → 应用启动完成
+```
+
+> **面试关键点**：自动配置发生在 `invokeBeanFactoryPostProcessors` 阶段，内嵌容器在 `onRefresh` 阶段启动，Runner 在最后执行适合做初始化任务
+
+---
+
+## 四、内嵌容器原理 ⭐⭐
+
+Spring Boot 通过 `ServletWebServerFactory`（SPI）创建内嵌容器：
+
+```
+TomcatServletWebServerFactory → EmbeddedTomcat
+JettyServletWebServerFactory  → EmbeddedJetty
+UndertowServletWebServerFactory → EmbeddedUndertow
+
+选择规则：@ConditionalOnClass + @ConditionalOnMissingBean
+依赖中有 tomcat-embed-core → 默认启动 Tomcat
+排除 Tomcat 引入 Jetty 依赖 → 自动切换 Jetty
+```
+
+```xml
+<!-- 切换内嵌容器 -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+    <exclusions>
+        <exclusion>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-tomcat</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-undertow</artifactId>
+</dependency>
+```
+
+---
+
+## 五、Actuator & 健康检查 ⭐⭐
+
+```yaml
+# 引入依赖后配置暴露端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,loggers
+  endpoint:
+    health:
+      show-details: always   # 显示详细健康信息
+```
+
+**常用端点：**
+
+| 端点 | 说明 | 典型用途 |
+|------|------|---------|
+| `/actuator/health` | 应用及依赖健康状态（DB/Redis/MQ） | K8s 存活/就绪探针 |
+| `/actuator/metrics` | JVM内存、GC、线程、HTTP请求统计 | 接入 Prometheus |
+| `/actuator/env` | 全部配置属性及来源 | 排查配置问题 |
+| `/actuator/loggers` | 运行时动态调整日志级别 | 线上临时开 DEBUG |
+| `/actuator/threaddump` | 线程堆栈快照 | 定位死锁/线程阻塞 |
+
+**自定义健康检查：**
+
+```java
+@Component
+public class RedisHealthIndicator extends AbstractHealthIndicator {
+    @Override
+    protected void doHealthCheck(Health.Builder builder) {
+        try {
+            redisTemplate.opsForValue().get("ping");
+            builder.up().withDetail("redis", "reachable");
+        } catch (Exception e) {
+            builder.down().withException(e);
+        }
+    }
+}
+```
+
+---
+
+## 六、面试标准答法
+
+**Q: SpringBoot 自动装配原理一句话总结？**
+
+> `@EnableAutoConfiguration` 通过 `AutoConfigurationImportSelector` 读取 `META-INF/spring.factories`（Boot 3.x 改为 `.imports` 文件）中注册的所有自动配置类，再经过 `@ConditionalOnClass`/`@ConditionalOnMissingBean` 等条件过滤，只将满足条件的配置类注入容器，实现"按需装配"。
+
+**Q: SpringBoot 和 Spring 的区别？**
+
+> Spring Boot = Spring + 自动装配 + 内嵌容器 + Starter依赖管理 + Actuator。Spring Boot 的核心价值是"约定大于配置"，消除了繁琐的 XML 配置和外部容器部署，让开发者聚焦业务逻辑。
+```
+
 **步骤：**
 ```
 ① 创建 autoconfigure 模块，写自动配置类（@Configuration + @Conditional）
