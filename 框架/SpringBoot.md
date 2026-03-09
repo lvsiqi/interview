@@ -269,7 +269,48 @@ private String appName;
    ⑪ 发布 ApplicationReadyEvent → 应用启动完成
 ```
 
-> **面试关键点**：自动配置发生在 `invokeBeanFactoryPostProcessors` 阶段，内嵌容器在 `onRefresh` 阶段启动，Runner 在最后执行适合做初始化任务
+```java
+// 模拟 SpringApplication.run() 核心逻辑
+public class SimplifiedSpringBoot {
+    public static ConfigurableApplicationContext run(Class<?> primarySource, String... args) {
+        // 1. 初始化 SpringApplication
+        SpringApplication app = new SpringApplication(primarySource);
+        // 2. 执行 run 方法，触发全流程
+        return app.run(args);
+    }
+
+    public ConfigurableApplicationContext run(String... args) {
+        // 初始化监听器
+        SpringApplicationRunListeners listeners = getRunListeners(args);
+        // 3. 发布启动事件
+        listeners.starting();
+        try {
+            // 4. 加载环境配置
+            ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
+            ConfigurableEnvironment environment = prepareEnvironment(listeners, applicationArguments);
+            // 5. 创建上下文
+            ConfigurableApplicationContext context = createApplicationContext();
+            // 6. 上下文前置处理
+            prepareContext(context, environment, listeners, applicationArguments);
+            // 7. 刷新上下文（核心）
+            refreshContext(context);
+            // 8. 启动完成处理
+            afterRefresh(context, applicationArguments);
+            // 发布启动完成事件
+            listeners.started(context);
+            // 启动内嵌容器，等待请求
+            callRunners(context, applicationArguments);
+            return context;
+        } catch (Throwable ex) {
+            // 处理启动失败
+            handleRunFailure(context, ex, listeners);
+            throw new IllegalStateException(ex);
+        }
+    }
+}
+```
+
+> **面试关键点**：SpringBoot 启动核心是 SpringApplication.run() 触发的「初始化 → 加载配置 → 创建上下文 → 刷新上下文 → 启动容器」全流程。自动配置发生在 `invokeBeanFactoryPostProcessors` 阶段，内嵌容器在 `onRefresh` 阶段启动，Runner 在最后执行适合做初始化任务
 
 ---
 
