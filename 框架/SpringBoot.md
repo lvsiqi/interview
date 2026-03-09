@@ -309,8 +309,31 @@ public class SimplifiedSpringBoot {
     }
 }
 ```
+> **刷新上下文（核心中的核心）**：
 
-> **面试关键点**：SpringBoot 启动核心是 SpringApplication.run() 触发的「初始化 → 加载配置 → 创建上下文 → 刷新上下文 → 启动容器」全流程。自动配置发生在 `invokeBeanFactoryPostProcessors` 阶段，内嵌容器在 `onRefresh` 阶段启动，Runner 在最后执行适合做初始化任务
+这一步是 SpringBoot 启动的**核心核心**，等价于「正式启动 Spring 容器」，所有 Bean 的创建、依赖注入、初始化都在这一步完成，具体包含以下关键操作（按执行顺序）：
+
+| 操作步骤 | 具体行为 | 通俗解释 |
+|----------|----------|----------|
+| 1. 初始化 Bean 工厂 | 刷新内部的 `BeanFactory`，初始化 Bean 定义注册表 | 为 Bean 创建准备 “工厂环境”，清空旧数据，重置状态 |
+| 2. 执行 BeanFactory 后置处理器 | 调用 `BeanFactoryPostProcessor` 接口实现类 | 处理配置类（如 `@Configuration`）、解析 `@Bean` 注解，注册 Bean 定义 |
+| 3. 注册 Bean 后置处理器 | 将 `BeanPostProcessor` 接口实现类注册到容器 | 为后续 Bean 的初始化、AOP 代理、注解解析（如 `@Autowired`）做准备 |
+| 4. 初始化 MessageSource | 初始化国际化消息源（处理多语言配置） | 支持 `messages.properties` 等国际化配置的加载 |
+| 5. 初始化事件广播器 | 初始化应用事件广播器（`ApplicationEventMulticaster`） | 为容器内事件发布 / 监听机制提供支持 |
+| 6. 初始化特殊 Bean | 初始化 `ApplicationContextAware` 等特殊 Bean | 让 Bean 能感知 Spring 容器（如获取上下文、Bean 名称） |
+| 7. 实例化所有非懒加载单例 Bean | 核心步骤：<br>① 扫描 `@Component`/`@Service`/`@Controller` 等注解类<br>② 通过反射实例化 Bean（调用构造方法）<br>③ 依赖注入（`@Autowired`/`@Resource` 赋值）<br>④ 执行初始化逻辑（`@PostConstruct`、`InitializingBean.afterPropertiesSet()`、`init-method`） | 从 “Bean 定义” 转为 “可使用的 Bean 对象”，完成 Bean 全生命周期 |
+| 8. 启动内嵌 Web 容器（仅 Web 应用） | 若为 Web 应用，触发 `ServletWebServerApplicationContext` 创建并启动 Tomcat/Jetty/Undertow | 绑定端口（如 8080），监听 HTTP 请求，替代外部容器部署 |
+| 9. 完成刷新，发布事件 | 发布 `ContextRefreshedEvent` 事件，标记上下文刷新完成 | 告知容器：所有 Bean 已初始化完成，可正常提供服务 |
+
+> **简要记**：
+
+- 扫描指定包下的 `@Component`/`@Service`/`@Controller` 等注解类；
+- 实例化 Bean（调用构造方法）、属性注入（`@Autowired`）；
+- 执行 Bean 的初始化逻辑（`@PostConstruct`、`InitializingBean` 等）；
+- 注册 Bean 后置处理器（处理 AOP、注解解析等）。
+
+> **面试关键点**：
+SpringBoot 启动核心是 SpringApplication.run() 触发的「初始化 → 加载配置 → 创建上下文 → 刷新上下文 → 启动容器」全流程。自动配置发生在 `invokeBeanFactoryPostProcessors` 阶段，内嵌容器在 `onRefresh` 阶段启动，Runner 在最后执行适合做初始化任务
 
 ---
 
