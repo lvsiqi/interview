@@ -23,6 +23,7 @@
 | [中间件/Netty.md](中间件/Netty.md) | 线程模型、ChannelPipeline、ByteBuf、粘包拆包、心跳、零拷贝 |
 | [中间件/Elasticsearch.md](中间件/Elasticsearch.md) | 倒排索引、写入/查询流程、集群、脑裂、深分页 |
 | [中间件/ZooKeeper.md](中间件/ZooKeeper.md) | ZAB协议、Session、分布式锁Curator、Nacos/etcd对比 |
+| [中间件/Nacos.md](中间件/Nacos.md) | 服务注册发现、Distro协议、配置中心长轮询、健康检查、AP/CP双模、与ZK/Eureka对比 |
 | **分布式/** | |
 | [分布式/分布式理论.md](分布式/分布式理论.md) | CAP/BASE、Paxos、Raft、分布式ID |
 | [分布式/分布式事务.md](分布式/分布式事务.md) | 2PC/3PC、TCC、Saga、消息最终一致性、Seata |
@@ -185,6 +186,18 @@
 - [x] 应用场景（服务注册/配置中心/Master选举/分布式屏障Barrier）→ [ZooKeeper.md](中间件/ZooKeeper.md#四典型应用场景-)
 - [x] 与Nacos/Eureka/etcd对比（CP vs AP / 为何不适合做注册中心）→ [ZooKeeper.md](中间件/ZooKeeper.md#五与-nacos--eureka--etcd-对比-)
 - [x] 集群配置与运维（zoo.cfg参数 / myid / 读写路由强一致 / 四字命令mntr / 动态扩缩容）→ [ZooKeeper.md](中间件/ZooKeeper.md#六集群配置与运维-)
+
+#### 3.7 Nacos ⭐⭐⭐⭐⭐
+- [x] 整体架构（注册中心 + 配置中心 + 健康管理 / 1.x vs 2.x gRPC）→ [Nacos.md](中间件/Nacos.md#一整体架构与核心功能-)
+- [x] 临时实例 vs 持久实例（AP/CP参数 / ephemeral）→ [Nacos.md](中间件/Nacos.md#22-临时实例-vs-持久实例-高频考点)
+- [x] Distro 协议（AP模式 / 数据分片 / 最终一致性）→ [Nacos.md](中间件/Nacos.md#24-distro-协议ap-模式核心)
+- [x] 配置中心长轮询原理（MD5比对 / 29.5s Hold / 变更推送）→ [Nacos.md](中间件/Nacos.md#32-配置动态刷新原理长轮询)
+- [x] @RefreshScope 原理与注意事项 → [Nacos.md](中间件/Nacos.md#33-refreshscope-原理)
+- [x] 配置优先级（Namespace/Group/DataId 三元组）→ [Nacos.md](中间件/Nacos.md#34-配置优先级)
+- [x] 健康检查（客户端心跳 vs 服务端主动探测）→ [Nacos.md](中间件/Nacos.md#四健康检查机制-)
+- [x] 集群一致性（Raft CP / Distro AP 双模式共存原理）→ [Nacos.md](中间件/Nacos.md#五集群一致性distro-ap--raft-cp)
+- [x] 自我保护模式 → [Nacos.md](中间件/Nacos.md#六自我保护模式-)
+- [x] 与 ZooKeeper / Eureka / Apollo 横向对比 → [Nacos.md](中间件/Nacos.md#七与其他注册配置中心横向对比-)
 
 ---
 

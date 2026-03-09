@@ -39,6 +39,7 @@ export default defineConfig({
           { text: 'RocketMQ', link: '/中间件/RocketMQ' },
           { text: 'Elasticsearch', link: '/中间件/Elasticsearch' },
           { text: 'ZooKeeper', link: '/中间件/ZooKeeper' },
+          { text: 'Nacos', link: '/中间件/Nacos' },
           { text: 'Netty', link: '/中间件/Netty' }
         ]
       },
@@ -124,6 +125,7 @@ export default defineConfig({
           { text: 'RocketMQ', link: '/中间件/RocketMQ' },
           { text: 'Elasticsearch', link: '/中间件/Elasticsearch' },
           { text: 'ZooKeeper', link: '/中间件/ZooKeeper' },
+          { text: 'Nacos', link: '/中间件/Nacos' },
           { text: 'Netty', link: '/中间件/Netty' }
         ]
       },
