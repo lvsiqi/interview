@@ -116,19 +116,7 @@ Watcher 事件类型：
 Nacos 的长轮询方案没有这个问题（服务端 hold 住请求，有变化直接在响应中携带数据）。
 ```
 
-### 1.5 面试标准答法
-
-> ZooKeeper 的数据模型是树形的 ZNode 结构，每个 ZNode 最大存 1MB 数据。有 4 种节点类型，其中**临时顺序节点**是实现分布式锁的关键。ZooKeeper 与客户端通过 Session 维持长连接，客户端心跳频率是 sessionTimeout/3，超过 sessionTimeout 未心跳则会话过期、临时节点自动删除，这是服务发现感知宕机节点的核心机制。Watcher 是一次性监听，触发后必须重新注册；通知不携带数据，是"推事件+拉数据"的组合模式。
-
-### 1.6 常见追问
-
-**Q: ZooKeeper 的 Watcher 是推还是拉？**
-> 混合模式。ZooKeeper Server 感知到节点变化后**推送**事件通知（含事件类型，不含数据）给客户端；客户端收到通知后需主动**拉取**最新数据（`getData`/`getChildren`）。这样设计减少了数据传输量（多个 Watcher 同时触发时不重复传数据），但引入一次额外读请求，且通知到拉数据之间有短暂窗口可能读到中间状态。
-
-**Q: 临时节点能有子节点吗？**
-> 不能。临时节点不允许有子节点，否则父节点（临时）被删后其子节点也应该被删除，但子节点的生命周期是独立的，语义上会产生矛盾。实现层面 ZooKeeper 直接禁止在临时节点下创建子节点。
-
-### 1.7 集群节点角色与分工 ⭐⭐⭐
+### 1.5 集群节点角色与分工 ⭐⭐⭐
 
 ZooKeeper 集群中有三种角色：**Leader**、**Follower**、**Observer**。
 
@@ -136,7 +124,7 @@ ZooKeeper 集群中有三种角色：**Leader**、**Follower**、**Observer**。
 集群拓扑示意（5 节点，含 1 个 Observer）：
 
           ┌─────────┐
-          │  Leader  │  ←── 内常选举交互 2888端口
+          │  Leader  │  ←── 节点间选举交互 2888 端口
           └───┬───┘
        ┌───┴─────┬─────┐
   ┌───┴──┐    ┌───┴──┐    ┌───┴──┐
@@ -145,7 +133,7 @@ ZooKeeper 集群中有三种角色：**Leader**、**Follower**、**Observer**。
           ↑全部参与选举（Quorum）    ↑不参与选举
 
 客户端连接字符串：zk-node1:2181,zk-node2:2181,zk-node3:2181
-  → Curator/ZkClient 会自动 Round-Robin 返回一个可用节点建connection
+  → Curator/ZkClient 会自动 Round-Robin 连接一个可用节点
 ```
 
 #### 各角色职责详解
@@ -162,7 +150,7 @@ ZooKeeper 集群中有三种角色：**Leader**、**Follower**、**Observer**。
   ① 处理所有写请求（分配 ZXID，发起 ZAB 广播）
   ② 维护 Follower/Observer 的存活列表，监控心跳
   ③ 广播 Proposal + COMMIT 到所有 Follower、将 INFORM 发给 Observer
-  ④ 篮务完成后向原请求节点返回应答
+  ④ 事务完成后向原请求节点返回应答
 
 为什么只有一个 Leader？
   保证所有写操作全序广播，避免并发写冲突；
@@ -178,7 +166,7 @@ ZooKeeper 集群中有三种角色：**Leader**、**Follower**、**Observer**。
   ④ 参与 Leader 选举投票（贡献自己的 Vote，占 Quorum）
   ⑤ Leader 宕机时进入 LOOKING 状态，发起新一轮选举
 
-心跳方向：Follower → Leader，囊楚内阶段每 tickTime 发送一次 PING
+心跳方向：Follower → Leader，正常运行阶段每 tickTime 发送一次 PING
 ```
 
 **Observer**
@@ -187,10 +175,10 @@ ZooKeeper 集群中有三种角色：**Leader**、**Follower**、**Observer**。
   ① 处理读请求（与 Follower 相同）
   ② 写请求转发给 Leader
   ③ Leader 推送 INFORM 消息（Observer 不参与 ACK）→ 直接提交事务到内存树
-  ④ 不参与选举投票，不占 Quorum，操作隠形
+  ④ 不参与选举投票，不占 Quorum，对选举结果无影响
 
 节点状态机（所有角色共用）：
-  LOOKING  → 选举中，不处理客户端请求
+  LOOKING   → 选举中，不处理客户端请求
   FOLLOWING → Follower 正常工作中
   LEADING   → Leader 正常工作中
   OBSERVING → Observer 正常工作中
@@ -201,29 +189,37 @@ ZooKeeper 集群中有三种角色：**Leader**、**Follower**、**Observer**。
 ```
 适用场景：
   ① 读内容远多于写的服务（接口配置、服务发现），需要横向扩展读容量
-  ② 跨数据中心部署：主机房开雟 Follower 保证 Quorum，异地机房全设为 Observer
+  ② 跨数据中心部署：主机房部署 Follower 保证 Quorum，异地机房全设为 Observer
      → 写性能不受跨机房高延迟影响，异地用户仍可读到本地副本
-  ③ 紧急扩容：回滴期需要扩大集群但不想发起选举，临时添加 Observer
+  ③ 高峰期紧急扩容：需要快速扩大集群读能力但不想触发选举，临时添加 Observer
 
 不适用：
-  ❌ 对写性能有极高要求（Observer 唯一不能缩减广播开销）
-  ❌ 希望提高集群容错性（Observer 不展庞 Quorum，容错必须增加 Follower）
+  ❌ 对写性能有极高要求（Observer 不能缩减写广播开销）
+  ❌ 希望提高集群容错性（Observer 不贡献 Quorum，容错必须增加 Follower）
 ```
 
-#### 面试标准答法
+### 1.6 面试标准答法
 
-> ZooKeeper 集群有三种角色：**Leader**是唯一写入入口，负责给事务分配 ZXID 并通过 ZAB 广播收密 Follower ACK；**Follower**处理读请求并参与选举投票，占 Quorum；**Observer** 只分担读压力，不参与选举和 ACK，在不影响写性能的前提下横向扩展读容量。在 `zoo.cfg` 中将节点标记为 `observer` 即可自动进入 OBSERVING 状态。
+> ZooKeeper 的数据模型是树形的 ZNode 结构，每个 ZNode 最大存 1MB 数据。有 4 种节点类型，其中**临时顺序节点**是实现分布式锁的关键。ZooKeeper 与客户端通过 Session 维持长连接，客户端心跳频率是 sessionTimeout/3，超过 sessionTimeout 未心跳则会话过期、临时节点自动删除，这是服务发现感知宕机节点的核心机制。Watcher 是一次性监听，触发后必须重新注册；通知不携带数据，是"推事件+拉数据"的组合模式。
+>
+> 集群角色上，**Leader** 是唯一写入入口，负责给事务分配 ZXID 并通过 ZAB 广播收取 Follower ACK；**Follower** 处理读请求并参与选举投票，占 Quorum；**Observer** 只分担读压力，不参与选举和 ACK，在不影响写性能的前提下横向扩展读容量。在 `zoo.cfg` 中将节点标记为 `observer` 即可自动进入 OBSERVING 状态。
 
-#### 常见追问
+### 1.7 常见追问
+
+**Q: ZooKeeper 的 Watcher 是推还是拉？**
+> 混合模式。ZooKeeper Server 感知到节点变化后**推送**事件通知（含事件类型，不含数据）给客户端；客户端收到通知后需主动**拉取**最新数据（`getData`/`getChildren`）。这样设计减少了数据传输量（多个 Watcher 同时触发时不重复传数据），但引入一次额外读请求，且通知到拉数据之间有短暂窗口可能读到中间状态。
+
+**Q: 临时节点能有子节点吗？**
+> 不能。临时节点不允许有子节点，否则父节点（临时）被删后其子节点也应该被删除，但子节点的生命周期是独立的，语义上会产生矛盾。实现层面 ZooKeeper 直接禁止在临时节点下创建子节点。
 
 **Q: Observer 收到 INFORM 消息，而 Follower 收到 PROPOSAL + COMMIT，为什么这样设计？**
-> Follower 需要参与 ACK 投票，所以必须先收到 Proposal 认知内容再回复 ACK，文风 COMMIT 再提交。Observer 不参与投票，所以 Leader 可以等过半已确认后才将已提交的事务用一个 INFORM 消息直接通知 Observer，不需额外往返。
+> Follower 需要参与 ACK 投票，所以必须先收到 Proposal 认知内容再回复 ACK，再经 COMMIT 才提交。Observer 不参与投票，所以 Leader 可以等过半节点已确认后，将已提交的事务用一个 INFORM 消息直接通知 Observer，无需额外往返。
 
 **Q: Follower / Observer 处理读请求时会转发给 Leader 吗？**
 > 不会。读请求直接在本地内存树应答，不经过 Leader，这是 ZooKeeper 分流读压力的核心设计。只有**写请求**（create/setData/delete）才会被 Follower/Observer 转发到 Leader。
 
 **Q: 集群中 Follower 和 Observer 如何区分？**
-> 生产中通过 `zoo.cfg` 的 `server.N` 配置尾部和 `myid` 区分：普通节点 `server.3=host:2888:3888`，加 `:observer` 后缀就是 Observer。程序前客户端无需感知对方角色，连接字符串屁平高就好。
+> 通过 `zoo.cfg` 的 `server.N` 配置和 `myid` 区分：普通节点写作 `server.3=host:2888:3888`，加 `:observer` 后缀就是 Observer。客户端无需感知对方角色，连接字符串填入所有节点地址即可。
 
 ---
 
