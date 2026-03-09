@@ -13,7 +13,7 @@
 | 三 | 分布式锁（原理 + Curator 代码） | ⭐⭐⭐⭐ | ✅ |
 | 四 | 应用场景（注册中心/配置中心/Leader选举/屏障） | ⭐⭐⭐ | ✅ |
 | 五 | 与 Nacos/Eureka/etcd 对比 | ⭐⭐⭐ | ✅ |
-| 六 | 集群配置与运维（zoo.cfg / 四字命令 / 读写路由 / 扩缩容） | ⭐⭐ | ✅ |
+| 六 | 集群配置与运维（zoo.cfg / 四字命令 / 三种读模式 / 读写路由 / 扩缩容） | ⭐⭐ | ✅ |
 | 七 | 高频追问汇总 | ⭐⭐⭐⭐ | ✅ |
 
 ---
@@ -216,7 +216,7 @@ ZooKeeper 集群中有三种角色：**Leader**、**Follower**、**Observer**。
 > Follower 需要参与 ACK 投票，所以必须先收到 Proposal 认知内容再回复 ACK，再经 COMMIT 才提交。Observer 不参与投票，所以 Leader 可以等过半节点已确认后，将已提交的事务用一个 INFORM 消息直接通知 Observer，无需额外往返。
 
 **Q: Follower / Observer 处理读请求时会转发给 Leader 吗？**
-> 不会。读请求直接在本地内存树应答，不经过 Leader，这是 ZooKeeper 分流读压力的核心设计。只有**写请求**（create/setData/delete）才会被 Follower/Observer 转发到 Leader。
+> 默认读请求：Follower/Observer 直接读本地，不会转发给 Leader；只有强一致读（读 Leader、sync 读）才会转发。**写请求**（create/setData/delete）会被 Follower/Observer 转发到 Leader。
 
 **Q: 集群中 Follower 和 Observer 如何区分？**
 > 通过 `zoo.cfg` 的 `server.N` 配置和 `myid` 区分：普通节点写作 `server.3=host:2888:3888`，加 `:observer` 后缀就是 Observer。客户端无需感知对方角色，连接字符串填入所有节点地址即可。
@@ -715,6 +715,127 @@ echo 3 > /opt/zookeeper/data/myid   # zk-node3
 | 读请求（默认）| 接收节点本地 | 顺序一致（可能读旧）|
 | 读请求（sync() 后）| 接收节点（同步后）| 线性一致 |
 | Observer 读 | Observer 本地 | 顺序一致（同 Follower）|
+
+### 6.2.1 三种读模式深度对比 ⭐⭐⭐
+
+ZooKeeper 的读请求有三种模式，核心区别在于**一致性保障力度**与**性能开销**的取舍：
+
+---
+
+#### ① 本地读（Local Read，默认模式）
+
+```
+原理：
+  客户端连接到任意节点（Follower / Observer），读请求直接由该节点本地内存树响应，
+  不经过 Leader，不触发任何 RPC。
+
+一致性级别：顺序一致性（Sequential Consistency）
+  ✅ 同一客户端的读写操作保证有序（不会读到比自己上次读更旧的数据）
+  ❌ 不同客户端可能看到不同进度的数据（Follower 可能落后 Leader 若干事务）
+  ❌ 无法保证读到全局最新已提交数据
+
+适用场景：
+  - 读多写少，对一致性要求宽松（如服务发现列表查询）
+  - 需要最大吞吐量，可接受毫秒级数据旧
+
+示意：
+  Client ──读──→ Follower（本地内存树，ZXID=100）
+  但 Leader 当前 ZXID=103，Follower 落后 3 条事务 → 读到旧值
+```
+
+**为什么默认是本地读？**
+```
+① 性能：无需网络往返，延迟最低（内存操作，微秒级）
+② 扩展性：读压力分散到所有 Follower，Leader 专注处理写请求
+③ 对大多数场景已足够：服务注册、配置读取等偶发性旧数据可以接受
+```
+
+---
+
+#### ② 读 Leader（Leader Read）
+
+```
+原理：
+  客户端主动连接 Leader 节点（通过 stat 命令识别 Leader IP），
+  读请求直接由 Leader 处理，Leader 始终持有最新已提交数据。
+
+一致性级别：线性一致性（Linearizability）
+  ✅ Leader 内存树是所有已提交事务的权威来源，读必然是最新
+  ✅ 写入后立即在同一连接读，可以读到刚写入的数据
+
+缺点：
+  ❌ 破坏读写分离架构，所有读请求集中打向 Leader → Leader 成为性能瓶颈
+  ❌ ZooKeeper 官方未提供"强制所有读转发到 Leader"的配置，
+     需要客户端侧自行识别并定向连接 Leader（运维成本高）
+  ❌ Leader 宕机后客户端需重建连接
+
+实现（通过四字命令定位 Leader）：
+  # 找出 Leader 节点
+  for host in zk1 zk2 zk3; do
+    echo "$(echo stat | nc $host 2181 | grep Mode)  →  $host"
+  done
+  # 输出示例：
+  #   Mode: follower  →  zk1
+  #   Mode: leader    →  zk2   ← 这台直连
+  #   Mode: follower  →  zk3
+
+适用场景：
+  - 极少数对读强一致要求极高且并发量不大的场景
+  - 不推荐在生产大规模使用
+```
+
+---
+
+#### ③ 过半确认读（Quorum Read / sync + getData）
+
+```
+原理：
+  在读取数据前，先调用 sync() 让 Follower 与 Leader 完成一次同步 ACK；
+  sync() 本质是请求 Leader 触发一次空 Proposal 广播，
+  等到过半节点（含当前 Follower）确认该 Proposal 后，
+  Follower 的 ZXID 追上了 Leader 当前状态 → 再 getData 保证读到最新值。
+
+  这正是"过半确认"的含义：并非 Client 直接向过半节点发起读，
+  而是通过 sync() 隐式触发了一轮 Quorum 确认流程，保证 Follower 数据是最新的。
+
+一致性级别：线性一致性
+  ✅ 读到的数据一定是 sync() 调用时刻已提交的最新值
+  ✅ 不需要直连 Leader，仍可通过 Follower 读，保留了读扩展性
+
+代价：
+  ⚠️ 一次额外的 Follower → Leader → 过半Follower → Follower RPC 往返（通常 1~5ms）
+  ⚠️ sync() 本身也消耗 Leader 的广播能力，高频调用影响整体写性能
+```
+
+**过半确认读代码示例（原生 API）：**
+```java
+// ❌ 普通读：可能读到旧数据
+byte[] staleData = zk.getData("/config/feature-flag", false, stat);
+
+// ✅ 过半确认读：sync() 后保证线性一致
+CountDownLatch syncLatch = new CountDownLatch(1);
+zk.sync("/config/feature-flag", (rc, path, ctx) -> syncLatch.countDown(), null);
+syncLatch.await(3, TimeUnit.SECONDS);          // 等待 sync 过半确认完成
+byte[] freshData = zk.getData("/config/feature-flag", false, stat);
+
+// Curator 封装（3.x 起自动处理 sync 和 getData 编排）：
+// CuratorFramework 的 getData().forPath() 默认不 sync，
+// 若需要强一致读，在 getData 前手动调用：
+client.sync().forPath("/config/feature-flag");
+byte[] data = client.getData().forPath("/config/feature-flag");
+```
+
+---
+
+#### 三种读模式汇总对比
+
+| 读模式 | 处理节点 | 一致性 | 性能 | 推荐度 | 典型场景 |
+|--------|---------|--------|------|--------|---------|
+| **本地读**（默认）| Follower/Observer 本地 | 顺序一致（可读旧）| ⭐⭐⭐⭐⭐ | ✅ 默认使用 | 服务发现、普通配置读取 |
+| **读 Leader** | Leader 直接处理 | 线性一致（最新）| ⭐⭐ | ⚠️ 不推荐 | 极端强一致小并发场景 |
+| **过半确认读**（sync+read）| Follower（同步后）| 线性一致（最新）| ⭐⭐⭐ | ✅ 强一致首选 | 配置热更新后确认、Master 选举结果确认 |
+
+> **面试核心结论：** ZooKeeper 默认读是顺序一致（本地读），不是线性一致。如果需要线性一致读，使用 `sync()` + `getData`（过半确认读），而不是直连 Leader——这样既保证了一致性，又保留了读的横向扩展能力。
 
 ### 6.3 四字命令（4lw）监控
 
