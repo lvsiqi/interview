@@ -550,35 +550,281 @@ props.put("group.instance.id", "consumer-host-1");
 
 **解决的问题：** 跨分区原子写 + 跨会话幂等（Producer重启恢复后继续已有事务）
 
-**关键机制：**
+#### 一句话讲清 Kafka 事务
+
+> Kafka 事务的本质就是：**消息先正常写进去，但打上"待定"标记；最后由 Coordinator 统一补一个 COMMIT 或 ABORT 标记，Consumer 根据这个标记决定读不读。**
+>
+> 具体来说：
+> 1. Producer 配一个固定的 `transactional.id`，启动时找到 Broker 上的 **TransactionCoordinator**（相当于事务管理器），拿到身份证（PID + Epoch）
+> 2. 发消息时消息**直接写入目标分区**，但因为没有 COMMIT 标记，`read_committed` 的 Consumer 看不到
+> 3. 所有消息发完后调 `commitTransaction()`，Coordinator 先把"准备提交"写入自己的日志（`__transaction_state`），然后往每个参与分区**追加一条 COMMIT Marker**
+> 4. Consumer 看到 COMMIT Marker 后，之前那批消息才变为可见；如果是 ABORT Marker，那批消息就被跳过
+>
+> **说白了就是一个两阶段提交：先写数据，再补标记。标记没到之前，下游看不见。**
+
+#### 10.3.1 核心组件
+
+| 组件 | 说明 |
+|------|------|
+| **transactional.id** | 生产者配置的全局唯一标识，跨会话不变，用于恢复/隔离事务 |
+| **TransactionCoordinator** | Broker 端事务协调者，每个 transactional.id 通过 hash 映射到 `__transaction_state` 的某个分区，该分区 Leader 所在 Broker 即为其 Coordinator |
+| **`__transaction_state`** | 内部 Topic（默认 50 分区），持久化事务状态日志，类似数据库的 redo log |
+| **PID + Epoch** | Coordinator 为每个 transactional.id 分配 PID（Producer ID）和单调递增的 Epoch，防止僵尸实例 |
+| **Transaction Marker** | COMMIT / ABORT 控制消息，写入目标分区，告知 Consumer 该事务最终状态 |
+
+#### 10.3.2 完整事务流程（两阶段提交）
+
 ```
-transactional.id → 全局唯一，标识Producer身份
-TransactionCoordinator → Broker端，管理事务状态机（持久化到内部Topic）
-Epoch机制 → 防止僵尸Producer（旧实例重启后epoch低于新实例，写入被拒绝）
+                    Producer                 TransactionCoordinator             目标Partition Broker
+                       │                              │                               │
+  ① initTransactions() │──FindCoordinator────────────→│                               │
+                       │←─分配 PID+Epoch──────────────│                               │
+                       │                              │                               │
+  ② beginTransaction() │  （仅本地标记，无网络交互）      │                               │
+                       │                              │                               │
+  ③ send(topicA-p0)   │──AddPartitionsToTxn──────────→│ 记录：Ongoing                  │
+                       │                              │ {txnId, topicA-p0}             │
+                       │──Produce──────────────────────────────────────────────────────→│ 消息写入(附带PID+Epoch)
+                       │                              │                               │
+  ④ send(topicB-p1)   │──AddPartitionsToTxn──────────→│ 追加：{txnId, topicB-p1}       │
+                       │──Produce──────────────────────────────────────────────────────→│
+                       │                              │                               │
+  ⑤ commitTransaction │──EndTxn(COMMIT)──────────────→│                               │
+                       │                              │                               │
+         ┌─────────── 阶段一：Coordinator 写入 PrepareCommit 到 __transaction_state ──────┐
+         │             │                              │                               │
+         │  阶段二：Coordinator 向所有参与分区发送 Transaction Marker（COMMIT 标记）        │
+         │             │                              │──WriteTxnMarker(COMMIT)───────→│
+         │             │                              │←─成功─────────────────────────│
+         │             │                              │                               │
+         │  所有Marker写入成功后，写入 CompleteCommit 到 __transaction_state                │
+         └────────────────────────────────────────────────────────────────────────────┘
+                       │←─事务完成──────────────────────│                               │
 ```
+
+**各步骤详解：**
+
+| 步骤 | 动作 | 说明 |
+|------|------|------|
+| ① `initTransactions()` | FindCoordinator + InitPID | 找到 Coordinator，获取 PID+Epoch；若已有未完成事务则先回滚 |
+| ② `beginTransaction()` | 本地标记 | 纯客户端操作，无网络开销 |
+| ③④ `send()` | AddPartitionsToTxn + Produce | 首次往新分区写消息时，先向 Coordinator 注册该分区；消息正常写入目标分区（此时 Consumer read_committed 不可见） |
+| ⑤ `commitTransaction()` | EndTxn → PrepareCommit → WriteTxnMarker → CompleteCommit | 两阶段提交：先持久化 Prepare 状态，再向所有分区写 COMMIT Marker，最后标记完成 |
+
+#### 10.3.2.1 事务提交 Offset（consume-transform-produce 核心）
+
+在最典型的 **consume → 处理 → produce** 场景中，消费位移（offset）必须和生产消息在**同一个事务**里原子提交，否则会出现：
+- offset 提交了但消息没发出去 → 消息丢失
+- 消息发出去了但 offset 没提交 → 重复消费
+
+**`sendOffsetsToTransaction` 原理：**
+
+```
+正常流程（无事务）：
+  Consumer.commitSync() → offset 写入 __consumer_offsets（由 GroupCoordinator 管理）
+
+事务流程：
+  Producer.sendOffsetsToTransaction(offsets, consumerGroupId)
+    → Producer 向 TransactionCoordinator 发送 AddOffsetsToTxn 请求
+    → Coordinator 根据 consumerGroupId 计算出 __consumer_offsets 的目标分区
+    → 将该分区也纳入当前事务的参与者列表
+    → Producer 再向 GroupCoordinator 发送 TxnOffsetCommit 请求，写入 offset（带 PID+Epoch 标记）
+    → 此时 offset 处于"待定"状态
+
+  Producer.commitTransaction()
+    → Coordinator 向 __consumer_offsets 的目标分区也写入 COMMIT Marker
+    → offset 正式生效
+
+  Producer.abortTransaction()
+    → Coordinator 向 __consumer_offsets 写入 ABORT Marker
+    → offset 被丢弃，Consumer 下次重新从旧 offset 消费
+```
+
+**关键点：offset 被当作一条特殊的"消息"，和业务消息一样参与两阶段提交，COMMIT 后才生效。**
+
+**完整 consume-transform-produce 代码：**
 
 ```java
-// 事务Producer完整用法
-props.put("transactional.id", "order-producer-1");   // 唯一ID
-props.put("enable.idempotence", "true");              // 事务依赖幂等
-producer.initTransactions();                          // 向TransactionCoordinator注册
+// 配置
+Properties producerProps = new Properties();
+producerProps.put("transactional.id", "ctp-processor-1");
+KafkaProducer<String, String> producer = new KafkaProducer<>(producerProps);
 
-try {
+Properties consumerProps = new Properties();
+consumerProps.put("group.id", "ctp-group");
+consumerProps.put("enable.auto.commit", "false");           // 必须关闭自动提交
+consumerProps.put("isolation.level", "read_committed");     // 只读已提交
+KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumerProps);
+
+producer.initTransactions();
+consumer.subscribe(Collections.singletonList("source-topic"));
+
+while (true) {
+    ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(200));
+    if (records.isEmpty()) continue;
+
     producer.beginTransaction();
-    producer.send(new ProducerRecord<>("order-topic", key, orderMsg));
-    producer.send(new ProducerRecord<>("inventory-topic", key, inventoryMsg));
-    producer.commitTransaction();    // 两条消息原子提交
-} catch (Exception e) {
-    producer.abortTransaction();     // 原子回滚，Consumer侧不可见
+    try {
+        // ① 处理 + 生产
+        for (ConsumerRecord<String, String> record : records) {
+            String result = transform(record.value());
+            producer.send(new ProducerRecord<>("target-topic", record.key(), result));
+        }
+
+        // ② 把消费 offset 纳入事务（关键！）
+        Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
+        for (TopicPartition partition : records.partitions()) {
+            List<ConsumerRecord<String, String>> partRecords = records.records(partition);
+            long lastOffset = partRecords.get(partRecords.size() - 1).offset();
+            offsets.put(partition, new OffsetAndMetadata(lastOffset + 1));  // +1 = 下次消费起始位
+        }
+        producer.sendOffsetsToTransaction(offsets, consumer.groupMetadata());
+
+        // ③ 原子提交：目标消息 + 消费offset 一起生效
+        producer.commitTransaction();
+    } catch (ProducerFencedException e) {
+        producer.close();
+        break;
+    } catch (KafkaException e) {
+        // 原子回滚：目标消息不可见 + offset 不生效 → Consumer 下次重新消费
+        producer.abortTransaction();
+    }
 }
 ```
 
-**Consumer端配合：**
+**事务 offset 提交 vs 普通 offset 提交对比：**
+
+| 对比项 | `consumer.commitSync()` | `producer.sendOffsetsToTransaction()` |
+|--------|------------------------|--------------------------------------|
+| 谁提交 | Consumer 自己 | Producer 代为提交 |
+| 写入目标 | `__consumer_offsets` | 同样写 `__consumer_offsets`，但带事务标记 |
+| 生效时机 | 立即生效 | 等 COMMIT Marker 写入后才生效 |
+| 原子性 | 与业务消息**不原子** | 与业务消息**原子**（同一事务） |
+| 回滚 | 不支持 | abort 后 offset 不生效，自动重新消费 |
+
+#### 10.3.3 Abort 流程
+
+```
+producer.abortTransaction()
+  → EndTxn(ABORT) → PrepareAbort → 向所有参与分区写 ABORT Marker → CompleteAbort
+```
+
+ABORT Marker 写入后，Consumer 端 `read_committed` 会跳过这批消息。
+
+#### 10.3.4 Consumer 如何过滤未提交消息
+
+```
+isolation.level = read_committed 时：
+
+1. Broker 维护每个分区的 LSO（Last Stable Offset）
+   LSO = 所有进行中事务的最小 offset
+   Consumer 只能消费到 LSO 之前的消息
+
+2. 当 COMMIT Marker 写入后 → LSO 前进 → 消息变为可消费
+3. 当 ABORT Marker 写入后 → LSO 前进 → Consumer 通过 Abort 索引（.txnindex 文件）跳过这批消息
+
+图示：
+  offset:  0  1  2  3  4  5  6  7  8  9
+  消息:    A  B  T1 T1 T1 C  T2 T2 D  E
+                 ↑──事务1──↑     ↑事务2↑
+  LSO = 2（事务1未提交时，Consumer最多读到offset 1）
+  事务1 COMMIT 后 → LSO推进到6 → Consumer可读 0~5
+  事务2 ABORT 后  → LSO推进到9 → Consumer读6~8时跳过T2的消息
+```
+
+> ⚠️ 长事务会导致 LSO 长时间不推进，阻塞下游 Consumer 消费，生产中应控制事务时长
+
+#### 10.3.5 Epoch 防僵尸机制
+
+```
+场景：Producer-A（transactional.id="tx-1"）宕机，Producer-B 以相同 id 启动
+
+1. Producer-B initTransactions() → Coordinator 分配新 Epoch（oldEpoch + 1）
+2. 若 Producer-A 的旧事务未完成 → Coordinator 主动 abort 旧事务
+3. Producer-A 恢复后发送请求 → Broker 检测 Epoch 过期 → 拒绝（ProducerFencedException）
+4. 保证同一 transactional.id 全局只有一个活跃 Producer
+```
+
+#### 10.3.6 代码示例
 
 ```java
-// isolation.level=read_committed：只消费已提交的事务消息（默认read_uncommitted）
-props.put("isolation.level", "read_committed");
+// === 生产者配置 ===
+Properties props = new Properties();
+props.put("bootstrap.servers", "broker1:9092,broker2:9092");
+props.put("transactional.id", "order-producer-1");   // 全局唯一，跨重启不变
+props.put("enable.idempotence", "true");              // 事务依赖幂等（设transactional.id时自动开启）
+props.put("acks", "all");                             // 自动强制为all
+
+KafkaProducer<String, String> producer = new KafkaProducer<>(props);
+producer.initTransactions();  // 必须调用，向 Coordinator 注册
+
+// === 事务发送（Consume-Transform-Produce 模式）===
+try {
+    producer.beginTransaction();
+
+    // 跨 Topic 原子写入
+    producer.send(new ProducerRecord<>("order-topic", key, orderMsg));
+    producer.send(new ProducerRecord<>("inventory-topic", key, inventoryMsg));
+
+    // 消费位移也可纳入事务（consume-transform-produce 场景）
+    Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
+    offsets.put(new TopicPartition("source-topic", 0),
+               new OffsetAndMetadata(lastOffset + 1));
+    producer.sendOffsetsToTransaction(offsets, consumerGroupId);
+
+    producer.commitTransaction();    // 二阶段提交
+} catch (ProducerFencedException e) {
+    // 被更高 Epoch 的 Producer 隔离，不可恢复，必须关闭
+    producer.close();
+} catch (KafkaException e) {
+    producer.abortTransaction();     // 回滚，所有消息对 read_committed Consumer 不可见
+}
+
+// === 消费者配置 ===
+Properties consumerProps = new Properties();
+consumerProps.put("isolation.level", "read_committed");  // 只读已提交事务消息
+consumerProps.put("enable.auto.commit", "false");        // 事务场景必须关闭自动提交
 ```
+
+#### 10.3.7 事务状态机
+
+```
+                   ┌──────────────────────────────────────┐
+                   │         __transaction_state           │
+                   │       持久化的状态流转日志               │
+                   └──────────────────────────────────────┘
+
+  Empty ──beginTxn──→ Ongoing ──endTxn(COMMIT)──→ PrepareCommit ──allMarkerDone──→ CompleteCommit
+                         │                                                              │
+                         │       endTxn(ABORT)──→ PrepareAbort ──allMarkerDone──→ CompleteAbort
+                         │                                                              │
+                         └──────────────── 事务超时(默认60s) ──→ 自动 Abort ─────────────┘
+```
+
+> 事务超时由 `transaction.timeout.ms`（默认 60000ms）控制，超时后 Coordinator 自动 Abort
+
+#### 10.3.8 性能影响与调优
+
+| 影响点 | 说明 | 调优建议 |
+|--------|------|---------|
+| Coordinator 交互 | 每次 begin/commit 涉及网络 RPC | 批量聚合消息后一次 commit，不要每条消息一个事务 |
+| PrepareCommit 持久化 | 写 `__transaction_state`（acks=all） | 该 Topic 默认 3 副本，确保 Broker 存储性能 |
+| Transaction Marker | 向每个参与分区写 Marker | 减少单事务涉及的分区数 |
+| LSO 阻塞 | 长事务阻塞下游消费 | 控制事务时长 < 5s，设置合理的 `transaction.timeout.ms` |
+| 吞吐下降 | 整体约降 20%~30% | 仅在需要原子性的场景使用事务 |
+
+#### 10.3.9 与 RocketMQ 事务消息对比
+
+| 对比维度 | Kafka 事务 | RocketMQ 事务消息 |
+|---------|-----------|-----------------|
+| **设计目标** | 跨分区原子写 + 流处理 Exactly Once | 本地事务与消息发送的最终一致性 |
+| **机制** | 两阶段提交（Coordinator + Marker） | 半消息 + 本地事务回查 |
+| **回查** | 无回查，超时自动 Abort | Broker 主动回查 Producer 本地事务状态 |
+| **适用场景** | consume-transform-produce 流处理管道 | 订单创建后发消息通知下游（DB+MQ 一致性） |
+| **Consumer 感知** | `read_committed` 过滤未提交消息 | 半消息对 Consumer 完全不可见 |
+| **跨系统事务** | 不直接支持（需配合外部 DB 事务） | 天然支持本地 DB 事务 + 消息原子性 |
+
+> **一句话区别**：Kafka 事务保证"Kafka 内部多分区原子写"，RocketMQ 事务消息保证"本地 DB 事务和消息发送的一致性"
 
 ---
 
