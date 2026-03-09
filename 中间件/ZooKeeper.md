@@ -13,7 +13,7 @@
 | 三 | 分布式锁（原理 + Curator 代码） | ⭐⭐⭐⭐ | ✅ |
 | 四 | 应用场景（注册中心/配置中心/Leader选举/屏障） | ⭐⭐⭐ | ✅ |
 | 五 | 与 Nacos/Eureka/etcd 对比 | ⭐⭐⭐ | ✅ |
-| 六 | 集群配置与运维（zoo.cfg / 四字命令 / 三种读模式 / 读写路由 / 扩缩容） | ⭐⭐ | ✅ |
+| 六 | 集群配置与运维（zoo.cfg / 持久化机制 / 三种读模式 / 读写路由 / 四字命令 / 扩缩容） | ⭐⭐ | ✅ |
 | 七 | 高频追问汇总 | ⭐⭐⭐⭐ | ✅ |
 
 ---
@@ -689,7 +689,182 @@ echo 3 > /opt/zookeeper/data/myid   # zk-node3
 
 > `myid` 的值必须与 `zoo.cfg` 中 `server.N` 的 N 严格对应，ZooKeeper 启动时读取它确认自己的身份参与选举。
 
-### 6.2 集群读写路由与强一致读
+---
+
+### 6.2 持久化机制 ⭐⭐⭐
+
+ZooKeeper 数据全量保存在**内存树（DataTree）**中，持久化依靠两种文件：**事务日志（Transaction Log）** 和 **快照（Snapshot）**，二者配合实现节点重启后的数据恢复。
+
+#### 6.2.1 两种持久化文件
+
+```
+数据目录结构：
+  dataLogDir/version-2/
+    log.100000001   ← 事务日志文件（文件名为该文件第一条事务的 ZXID 十六进制）
+    log.200000001
+    log.300000001
+
+  dataDir/version-2/
+    snapshot.100000001   ← 快照文件（文件名为生成快照时的 lastProcessedZxid）
+    snapshot.200000005
+    myid                 ← 节点编号
+
+恢复时读取顺序：
+  最新快照 → 快照之后的事务日志增量重放 → 内存树恢复完毕
+```
+
+| 文件类型 | 目录配置 | 作用 | 写入时机 |
+|---------|---------|------|--------|
+| **事务日志（WAL）** | `dataLogDir` | 记录每条原始事务（Proposal），先于内存树提交 | 每次写请求，Follower 收到 Proposal 先写日志再 ACK |
+| **快照（Snapshot）** | `dataDir` | 内存树某个时刻的全量序列化 | 后台异步触发（事务数达到阈值） |
+
+---
+
+#### 6.2.2 事务日志（Transaction Log / WAL）
+
+```
+写入流程（WAL 先写原则）：
+  Follower 收到 Leader 的 Proposal
+    ↓
+  ① 将事务序列化，追加写入 dataLogDir 中的日志文件（fsync 刷盘）
+    ↓
+  ② 向 Leader 回复 ACK
+    ↓
+  ③ 收到 Leader COMMIT 后，将事务应用到内存树
+
+关键：先写日志再 ACK，保证即使节点崩溃，已 ACK 的事务也能从日志恢复
+```
+
+**预分配（Pre-allocation）机制：**
+```
+问题：每次追加写都要扩展文件，会触发文件系统 inode 更新，影响顺序写性能
+
+解决：ZooKeeper 日志文件以 64MB 为单位预分配磁盘空间（可通过 zookeeper.preAllocSize 调整）
+  → 文件末尾填充空字节占位，实际内容追加写入已分配空间
+  → 避免频繁 inode 更新，保证近似顺序 IO
+
+日志文件命名：log.<firstZXID-hex>
+  文件名中的 ZXID 即该文件内第一条事务的 ZXID，便于恢复时按 ZXID 范围定位
+```
+
+**为什么 dataLogDir 建议放独立磁盘？**
+```
+事务日志是写热点：每条写请求都必须先 fsync 刷盘才能 ACK
+  → 与快照（dataDir）共用磁盘时，快照写入与日志 fsync 争抢 IO
+  → 独立磁盘消除竞争，降低写请求延迟（通常可减少 30%~50% 延迟）
+
+推荐：dataLogDir 挂载 SSD 或独立 HDD，dataDir 可共用
+```
+
+---
+
+#### 6.2.3 快照（Snapshot）
+
+```
+触发时机：
+  每处理 snapCount 条事务（默认 100000 条），触发一次快照
+  实际触发点加了随机抖动（snapCount/2 ~ snapCount 之间随机），
+  防止集群中所有节点同时做快照压垮磁盘 IO
+
+  zoo.cfg 配置：
+    snapCount=100000    # 默认值，可调小加快快照频率（减少恢复时日志重放量）
+```
+
+**快照生成流程（异步，不阻塞写入）：**
+```
+① 主线程记录当前 lastProcessedZxid（作为快照文件名）
+② 启动独立快照线程，将内存树（DataTree）序列化为二进制文件
+   序列化期间：
+   - 新到来的写请求正常处理（内存树继续更新）
+   - 快照記录的是序列化开始时刻的「模糊快照（Fuzzy Snapshot）」
+③ 快照文件写完后，序列化期间的增量事务可从日志中重放补偿
+
+为什么叫「模糊快照」？
+  序列化过程中内存树仍在被修改，快照内容可能包含部分新事务的结果
+  → 快照数据不保证对应某个精确的 ZXID 时刻
+  → 但这不影响正确性：恢复时从快照 ZXID 开始重放后续事务日志，幂等补偿即可
+```
+
+**快照文件格式：**
+```
+snapshot.<lastProcessedZxid-hex>
+  ├── 文件头：magic number（SNAP）+ 版本 + dbId
+  ├── sessions：所有活跃 Session 及其过期时间
+  └── datatree：ZNode 树的深度优先序列化
+       每个 ZNode = path + data + stat（czxid/mzxid/version/...） + acl
+```
+
+---
+
+#### 6.2.4 启动恢复流程
+
+```
+ZooKeeper 节点启动时（或崩溃重启后）：
+
+① 扫描 dataDir/version-2/ 找到最新的快照文件（ZXID 最大的那个）
+② 反序列化快照 → 恢复内存树 + Session 列表
+③ 扫描 dataLogDir/version-2/ 找到快照 ZXID 之后的所有事务日志
+④ 按 ZXID 顺序重放事务日志（增量重放）→ 内存树追上最新状态
+⑤ 节点进入 LOOKING 状态，参与 ZAB 选举/数据同步
+
+示例：
+  snapshot.200000005  ← 恢复基线（内存树到 ZXID=0x200000005）
+  log.200000006       ← 重放此后 6 条事务（ZXID 到 0x20000000b）
+  → 内存树恢复到宕机前最新状态
+
+恢复速度优化：
+  snapCount 配小 → 快照更频繁 → 重放日志更短 → 启动更快
+  代价：磁盘写入更频繁，权衡快照间隔
+```
+
+---
+
+#### 6.2.5 快照与日志的清理
+
+```
+问题：ZooKeeper 不自动删除旧快照和日志，长期运行后磁盘会写满
+
+方案一：autopurge（推荐）
+  zoo.cfg 配置：
+    autopurge.snapRetainCount=3    # 保留最近 N 个快照（及对应日志），最小值 3
+    autopurge.purgeInterval=24     # 每隔 N 小时自动清理（0 = 禁用自动清理）
+
+方案二：PurgeTxnLog 工具（手动/定时任务）
+  java -cp zookeeper.jar org.apache.zookeeper.server.PurgeTxnLog \
+       /opt/zookeeper/data /opt/zookeeper/txlog -n 3
+  # -n 3：保留最近 3 个快照及其之后的日志，其余删除
+
+方案三：zkCleanup.sh 脚本（bin 目录自带）
+
+注意：
+  ❌ 不要手动 rm 删除日志文件，ZooKeeper 读文件靠文件名 ZXID 排序，随意删除可能导致恢复失败
+  ✅ 必须保留至少 3 个快照（默认），确保能找到有效的恢复基线
+```
+
+---
+
+#### 6.2.6 持久化常见追问
+
+**Q: ZooKeeper 的快照是一致性快照吗？为什么叫「模糊快照」？**
+> 不是精确一致性快照。ZooKeeper 采用**异步模糊快照（Fuzzy Snapshot）**，序列化内存树时不暂停写入，因此快照内容可能夹杂序列化期间新提交事务的部分效果，不对应某个精确 ZXID 时刻。这不影响正确性，恢复时从快照标注的 ZXID 开始重放后续事务日志，幂等补偿即可还原到宕机前精确状态。
+
+**Q: 事务日志和快照分开放的意义是什么？**
+> 事务日志是高频 fsync 写热点（每条写请求必须先刷盘），快照是低频大文件顺序写。混用同一块磁盘时快照写 IO 会直接干扰事务日志 fsync，导致写请求延迟飙升。独立磁盘隔离两类 IO，是 ZooKeeper 最重要的运维调优手段之一。
+
+**Q: ZooKeeper 宕机重启需要多久？**
+> 取决于最新快照的大小和需要重放的事务日志长度。快照越新（snapCount 配小）、日志越短，重启越快。生产环境一般在秒级到十秒级，大集群快照很大时可能需要数十秒。ZAB 的 SNAP/DIFF 同步流程也是同样逻辑。
+
+**Q: ZooKeeper 的持久化与 Redis 的 AOF+RDB 有何异同？**
+
+| 对比维度 | ZooKeeper | Redis |
+|---------|-----------|-------|
+| WAL 日志 | ✅ 事务日志（先写日志再 ACK）| ✅ AOF（appendfsync always/everysec）|
+| 全量快照 | ✅ Snapshot（模糊快照，异步）| ✅ RDB（fork 子进程，COW）|
+| 恢复方式 | 最新快照 + 增量日志重放 | 优先 AOF，或 RDB + 后续 AOF 重放 |
+| 快照一致性 | 模糊快照（序列化期间不停写）| 精确快照（fork 时 COW，父子进程内存隔离）|
+| 日志压缩 | 无自动压缩（依赖 autopurge）| AOF rewrite 自动压缩 |
+
+### 6.3 集群读写路由与强一致读
 
 ```
 写请求路由：
@@ -837,7 +1012,7 @@ byte[] data = client.getData().forPath("/config/feature-flag");
 
 > **面试核心结论：** ZooKeeper 默认读是顺序一致（本地读），不是线性一致。如果需要线性一致读，使用 `sync()` + `getData`（过半确认读），而不是直连 Leader——这样既保证了一致性，又保留了读的横向扩展能力。
 
-### 6.3 四字命令（4lw）监控
+### 6.4 四字命令（4lw）监控
 
 通过 `echo cmd | nc <host> 2181` 获取节点状态（生产必备）：
 
@@ -866,7 +1041,7 @@ zk_followers                 → Follower 节点数（仅 Leader 节点上有值
 zk_synced_followers          → 已完成数据同步的 Follower 数，应等于 zk_followers
 ```
 
-### 6.4 动态扩缩容（3.5.0+）
+### 6.5 动态扩缩容（3.5.0+）
 
 ZooKeeper 3.5 之前，增减节点需修改所有节点 `zoo.cfg` 并滚动重启（有短暂选举窗口）。3.5+ 支持**动态配置（Reconfiguration）**：
 
@@ -893,7 +1068,7 @@ reconfig -remove 4
   ④ 建议一次只增/减一个节点，在业务低峰期操作，应用层做好重试
 ```
 
-### 6.5 集群常见故障排查
+### 6.6 集群常见故障排查
 
 | 故障现象 | 排查步骤 |
 |----------|----------|
@@ -904,11 +1079,11 @@ reconfig -remove 4
 | 写请求延迟飙高 | `mntr` 查 `zk_outstanding_requests`；检查网络抖动；集群超 7 节点广播开销大 |
 | 客户端频繁 Session 超时 | 检查 `sessionTimeout`（建议 ≥ 10s）；排查应用侧 Full GC 停顿导致心跳无法发送 |
 
-### 6.6 面试标准答法
+### 6.7 面试标准答法
 
 > ZooKeeper 集群通过 `zoo.cfg` 的 `server.N` 定义成员，每台机器靠 `dataDir/myid` 确认身份。写请求统一经 Leader 走 ZAB 广播（线性一致），读请求默认由本地节点处理（顺序一致，可能读旧），需要强一致读时调用 `sync()` 再 `getData`。运维上用四字命令 `mntr` 监控延迟和 `synced_followers` 状态；3.5 起支持 `reconfig` 动态成员变更，变更触发一轮选举，一次操作一个节点最安全。
 
-### 6.7 常见追问
+### 6.8 常见追问
 
 **Q: `zoo.cfg` 中 `syncLimit` 和 `initLimit` 有什么区别？**
 > `initLimit` 是 Follower **初次连接 Leader** 时（含全量 SNAP 同步阶段）的最大等待时间（单位 tick），数据差距大时同步慢，需设大些（建议 10~20）。`syncLimit` 是**正常运行中** Follower 发送心跳和追赶增量事务的超时，超过则被 Leader 移除活跃列表（建议 5）。
