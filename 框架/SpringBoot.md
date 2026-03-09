@@ -423,42 +423,12 @@ public class RedisHealthIndicator extends AbstractHealthIndicator {
 **Q: SpringBoot 和 Spring 的区别？**
 
 > Spring Boot = Spring + 自动装配 + 内嵌容器 + Starter依赖管理 + Actuator。Spring Boot 的核心价值是"约定大于配置"，消除了繁琐的 XML 配置和外部容器部署，让开发者聚焦业务逻辑。
-```
-
-**步骤：**
-```
-① 创建 autoconfigure 模块，写自动配置类（@Configuration + @Conditional）
-② 在 META-INF/spring.factories 中注册自动配置类
-③ 创建 starter 模块（只包含 pom.xml），依赖 autoconfigure 模块
-④ 其他项目引入 starter 依赖即可自动装配
-```
-
-```java
-// 自定义自动配置类示例
-@Configuration
-@ConditionalOnProperty(prefix = "mycompany.sms", name = "enabled", havingValue = "true")
-@EnableConfigurationProperties(SmsProperties.class)
-public class SmsAutoConfiguration {
-    
-    @Bean
-    @ConditionalOnMissingBean
-    public SmsClient smsClient(SmsProperties properties) {
-        return new SmsClient(properties.getAccessKey(), properties.getSecretKey());
-    }
-}
-```
-
----
-
-### 1.7 面试标准答法
 
 **Q: Spring Boot 自动装配的原理是什么？**
 
 > Spring Boot 自动装配的入口是 `@SpringBootApplication` 中的 `@EnableAutoConfiguration`，它通过 `@Import(AutoConfigurationImportSelector.class)` 注入选择器。选择器的 `selectImports()` 方法调用 `SpringFactoriesLoader` 读取所有 jar 包中 `META-INF/spring.factories` 文件里注册的自动配置类（百余个）；然后通过 `@ConditionalOnClass`、`@ConditionalOnMissingBean` 等条件注解过滤，只有引入了对应依赖且用户没有自定义 Bean 的情况下，自动配置类才会生效，对应的 Bean 才会在 Spring 容器中创建。这就实现了"引入依赖即可用"的效果。
-
 ---
-
-### 1.8 常见追问
+### 常见追问
 
 **Q: @SpringBootApplication 能放在非启动类上吗？**
 > 可以，但不推荐。`@ComponentScan` 默认扫描当前类所在包及其子包，如果放在错误的位置，可能导致扫描不到部分 Bean 或扫描范围过大。实践上总是放在项目根包下的启动类上。
@@ -470,3 +440,4 @@ public class SmsAutoConfiguration {
 > ① 创建 `SpringApplication` 对象，推断应用类型（Servlet/Reactive/None），加载 `META-INF/spring.factories` 中的 `ApplicationContextInitializer` 和 `ApplicationListener`；② 调用 `run()` 方法，发布 `ApplicationStartingEvent`；③ 根据应用类型创建对应 `ApplicationContext`；④ 执行 `ApplicationContextInitializer.initialize()`；⑤ 加载 `@SpringBootApplication` 启动类，触发 `@ComponentScan` + 自动装配；⑥ `refresh()` 容器，实例化所有单例 Bean；⑦ 发布 `ApplicationReadyEvent`，应用启动完成，执行 `CommandLineRunner`/`ApplicationRunner`。
 
 ---
+
