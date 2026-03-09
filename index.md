@@ -62,7 +62,15 @@ features:
   - icon: ⚡
     title: Netty
     details: Reactor线程模型、Channel/Pipeline/ByteBuf核心组件、粘包拆包、心跳机制、零拷贝原理
-    link: /中间件/Netty
+    link: /IO与网络框架/Netty
+  - icon: 📡
+    title: IO模型详解
+    details: 五种IO模型、BIO/NIO/AIO详解、select/poll/epoll深度对比、ET/LT触发模式、Reactor模式
+    link: /IO与网络框架/IO模型详解
+  - icon: 🔗
+    title: RPC与gRPC
+    details: RPC核心原理、gRPC/Protobuf/HTTP2、四种调用模式、拦截器、负载均衡、Dubbo3/Thrift对比
+    link: /IO与网络框架/RPC与gRPC
   - icon: 🆕
     title: Java新特性
     details: Java 8~21全览：Lambda/Stream/Optional、Record/Sealed Class/文本块、虚拟线程、模式匹配

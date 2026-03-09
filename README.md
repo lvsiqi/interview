@@ -20,10 +20,13 @@
 | **中间件/** | |
 | [中间件/Kafka.md](中间件/Kafka.md) | 架构原理、分区副本、高性能、消费者组、Exactly Once |
 | [中间件/RocketMQ.md](中间件/RocketMQ.md) | 对比Kafka、延迟消息、事务消息、顺序消息、死信队列、存储原理 |
-| [中间件/Netty.md](中间件/Netty.md) | 线程模型、ChannelPipeline、ByteBuf、粘包拆包、心跳、零拷贝 |
 | [中间件/Elasticsearch.md](中间件/Elasticsearch.md) | 倒排索引、写入/查询流程、集群、脑裂、深分页 |
 | [中间件/ZooKeeper.md](中间件/ZooKeeper.md) | ZAB协议、Session、分布式锁Curator、Nacos/etcd对比 |
 | [中间件/Nacos.md](中间件/Nacos.md) | 服务注册发现、Distro协议、配置中心长轮询、健康检查、AP/CP双模、与ZK/Eureka对比 |
+| **IO与网络框架/** | |
+| [IO与网络框架/IO模型详解.md](IO与网络框架/IO模型详解.md) | 五种IO模型、BIO/NIO/AIO详解、select/poll/epoll对比、Reactor模式 |
+| [IO与网络框架/Netty.md](IO与网络框架/Netty.md) | 线程模型、ChannelPipeline、ByteBuf、粘包拆包、心跳、零拷贝 |
+| [IO与网络框架/RPC与gRPC.md](IO与网络框架/RPC与gRPC.md) | RPC原理、gRPC/Protobuf/HTTP2、拦截器、负载均衡、框架对比 |
 | **分布式/** | |
 | [分布式/分布式理论.md](分布式/分布式理论.md) | CAP/BASE、Paxos、Raft、分布式ID |
 | [分布式/分布式事务.md](分布式/分布式事务.md) | 2PC/3PC、TCC、Saga、消息最终一致性、Seata |
@@ -158,13 +161,6 @@
 - [x] 消息存储原理（CommitLog & ConsumerQueue）→ [RocketMQ.md](中间件/RocketMQ.md#八消息存储原理-)
 - [x] 高可用架构（DLedger/Raft）→ [RocketMQ.md](中间件/RocketMQ.md#九高可用架构-)
 
-#### 3.6 Netty ⭐⭐⭐
-- [x] 线程模型（主从 Reactor、NioEventLoop）→ [Netty.md](中间件/Netty.md#二netty-线程模型-)
-- [x] 核心组件（ChannelPipeline、ByteBuf）→ [Netty.md](中间件/Netty.md#三核心组件-)
-- [x] 粘包 & 拆包解决方案 → [Netty.md](中间件/Netty.md#四粘包--拆包-)
-- [x] 心跳机制（IdleStateHandler）→ [Netty.md](中间件/Netty.md#五心跳机制-)
-- [x] 零拷贝（OS层+应用层）→ [Netty.md](中间件/Netty.md#六netty-零拷贝-)
-
 #### 3.4 Elasticsearch ⭐⭐⭐
 - [x] 核心概念 & 与MySQL对比 → [Elasticsearch.md](中间件/Elasticsearch.md#一核心概念--与mysql对比-)
 - [x] 倒排索引原理（Term Dictionary / Posting List / FST）→ [Elasticsearch.md](中间件/Elasticsearch.md#二倒排索引原理-)
@@ -278,7 +274,35 @@
 
 ---
 
-### 七、🌐 网络 & 操作系统
+### 七、🔌 IO与网络框架
+
+#### 7.1 IO模型详解 ⭐⭐⭐
+- [x] IO基础（用户态/内核态、数据拷贝流程）→ [IO模型详解.md](IO与网络框架/IO模型详解.md#一io-基础概念)
+- [x] 五种IO模型概述（同步阻塞/同步非阻塞/多路复用/信号驱动/异步IO）→ [IO模型详解.md](IO与网络框架/IO模型详解.md#二五种-io-模型概述)
+- [x] BIO详解（原理/代码/线程池优化）→ [IO模型详解.md](IO与网络框架/IO模型详解.md#三bio-详解)
+- [x] NIO详解（Channel/Buffer/Selector/代码）→ [IO模型详解.md](IO与网络框架/IO模型详解.md#四 nio-详解)
+- [x] AIO详解（CompletionHandler/Linux现状）→ [IO模型详解.md](IO与网络框架/IO模型详解.md#五aio-详解)
+- [x] select/poll/epoll深度对比（ET/LT触发模式）→ [IO模型详解.md](IO与网络框架/IO模型详解.md#六select--poll--epoll-深度对比)
+- [x] 三种IO模型综合对比&选型建议 → [IO模型详解.md](IO与网络框架/IO模型详解.md#七三种-io-模型综合对比)
+
+#### 7.2 Netty ⭐⭐⭐
+- [x] 线程模型（主从 Reactor、NioEventLoop）→ [Netty.md](IO与网络框架/Netty.md#二netty-线程模型-)
+- [x] 核心组件（ChannelPipeline、ByteBuf）→ [Netty.md](IO与网络框架/Netty.md#三核心组件-)
+- [x] 粘包 & 拆包解决方案 → [Netty.md](IO与网络框架/Netty.md#四粘包--拆包-)
+- [x] 心跳机制（IdleStateHandler）→ [Netty.md](IO与网络框架/Netty.md#五心跳机制-)
+- [x] 零拷贝（OS层+应用层）→ [Netty.md](IO与网络框架/Netty.md#六netty-零拷贝-)
+
+#### 7.3 RPC与gRPC ⭐⭐⭐
+- [x] RPC基础（调用流程/vs REST）→ [RPC与gRPC.md](IO与网络框架/RPC与gRPC.md#一rpc-基础概念)
+- [x] 核心组件（动态代理/序列化/传输层/服务发现）→ [RPC与gRPC.md](IO与网络框架/RPC与gRPC.md#二rpc-核心组件)
+- [x] gRPC深入（架构/Proto/HTTP2/四种调用模式）→ [RPC与gRPC.md](IO与网络框架/RPC与gRPC.md#三grpc-深入解析)
+- [x] 高级特性（拦截器/Deadline/重试/负载均衡）→ [RPC与gRPC.md](IO与网络框架/RPC与gRPC.md#四高级特性)
+- [x] Protobuf序列化原理（TLV/Varint）→ [RPC与gRPC.md](IO与网络框架/RPC与gRPC.md#五protobuf-序列化原理)
+- [x] 框架对比（gRPC/Dubbo3/Thrift/Feign）→ [RPC与gRPC.md](IO与网络框架/RPC与gRPC.md#六框架对比)
+
+---
+
+### 九、🌐 网络 & 操作系统
 
 - [x] TCP三次握手、四次挥手 → [网络与操作系统.md](底层知识/网络与操作系统.md#一tcp-三次握手--四次挥手)
 - [x] TCP可靠性保证 → [网络与操作系统.md](底层知识/网络与操作系统.md#二tcp-可靠性保证)
@@ -290,7 +314,7 @@
 
 ---
 
-### 八、💻 算法 & 数据结构（字节重点）⭐⭐⭐
+### 十、💻 算法 & 数据结构（字节重点）⭐⭐⭐
 
 - [x] 数组、链表、栈、队列 → [算法与数据结构.md](底层知识/算法与数据结构.md#一数组链表栈队列)
 - [x] 二叉树（遍历、BST、红黑树）→ [算法与数据结构.md](底层知识/算法与数据结构.md#二二叉树)
@@ -302,7 +326,7 @@
 
 ---
 
-### 九、🔍 场景题 & 故障排查
+### 十一、🔍 场景题 & 故障排查
 
 - [x] 线上CPU飙高如何排查 → [场景题与故障排查.md](其他专题/场景题与故障排查.md#一线上-cpu-飙高如何排查)
 - [x] 内存溢出如何排查 → [场景题与故障排查.md](其他专题/场景题与故障排查.md#二内存溢出如何排查)
@@ -312,7 +336,7 @@
 
 ---
 
-### 十、🎤 HR & 软技能
+### 十二、🎤 HR & 软技能
 
 - [x] 项目难点 & 亮点提炼 → [HR与软技能.md](其他专题/HR与软技能.md#一项目难点--亮点提炼)
 - [x] 团队协作冲突处理 → [HR与软技能.md](其他专题/HR与软技能.md#二团队协作--冲突处理)
@@ -321,7 +345,7 @@
 
 ---
 
-### 十一、🔐 Web 安全与认证鉴权 ⭐⭐⭐
+### 十三、🔐 Web 安全与认证鉴权 ⭐⭐⭐
 
 - [x] JWT 认证机制（结构/签名/Refresh Token）→ [安全.md](其他专题/安全.md#一jwt-认证机制-)
 - [x] OAuth2.0 四种授权模式（授权码/客户端凭证）→ [安全.md](其他专题/安全.md#二oauth20-协议-)
@@ -336,7 +360,7 @@
 
 ---
 
-### 十二、☁️ 云原生与 Kubernetes ⭐⭐⭐
+### 十四、☁️ 云原生与 Kubernetes ⭐⭐⭐
 
 - [x] Docker 原理（Namespace/Cgroups/镜像分层/网络模式）→ [云原生与K8s.md](其他专题/云原生与K8s.md#一docker-核心原理-)
 - [x] K8s 架构（Control Plane/Node组件详解/控制循环）→ [云原生与K8s.md](其他专题/云原生与K8s.md#二kubernetes-整体架构-)
@@ -350,7 +374,7 @@
 
 ---
 
-### 十三、🧩 设计模式
+### 十五、🧩 设计模式
 
 - [x] 单例模式（双重检查锁/静态内部类/枚举）→ [设计模式.md](其他专题/设计模式.md#11-单例模式-)
 - [x] 工厂模式（简单工厂/抽象工厂）→ [设计模式.md](其他专题/设计模式.md#12-工厂模式-)

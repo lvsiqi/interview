@@ -39,8 +39,15 @@ export default defineConfig({
           { text: 'RocketMQ', link: '/中间件/RocketMQ' },
           { text: 'Elasticsearch', link: '/中间件/Elasticsearch' },
           { text: 'ZooKeeper', link: '/中间件/ZooKeeper' },
-          { text: 'Nacos', link: '/中间件/Nacos' },
-          { text: 'Netty', link: '/中间件/Netty' }
+          { text: 'Nacos', link: '/中间件/Nacos' }
+        ]
+      },
+      {
+        text: 'IO与网络框架',
+        items: [
+          { text: 'IO模型详解', link: '/IO与网络框架/IO模型详解' },
+          { text: 'Netty', link: '/IO与网络框架/Netty' },
+          { text: 'RPC与gRPC', link: '/IO与网络框架/RPC与gRPC' }
         ]
       },
       {
@@ -130,8 +137,16 @@ export default defineConfig({
           { text: 'RocketMQ', link: '/中间件/RocketMQ' },
           { text: 'Elasticsearch', link: '/中间件/Elasticsearch' },
           { text: 'ZooKeeper', link: '/中间件/ZooKeeper' },
-          { text: 'Nacos', link: '/中间件/Nacos' },
-          { text: 'Netty', link: '/中间件/Netty' }
+          { text: 'Nacos', link: '/中间件/Nacos' }
+        ]
+      },
+      {
+        text: '🔌 IO与网络框架',
+        collapsed: false,
+        items: [
+          { text: 'IO模型详解', link: '/IO与网络框架/IO模型详解' },
+          { text: 'Netty', link: '/IO与网络框架/Netty' },
+          { text: 'RPC与gRPC', link: '/IO与网络框架/RPC与gRPC' }
         ]
       },
       {
