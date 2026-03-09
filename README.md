@@ -178,11 +178,13 @@
 
 #### 3.5 ZooKeeper ⭐⭐⭐
 - [x] 核心概念（节点类型 / Session心跳机制 / Watcher推拉模型）→ [ZooKeeper.md](中间件/ZooKeeper.md#一核心概念-)
+- [x] 集群节点角色与分工（Leader/Follower/Observer 职责对比、Observer 适用场景、状态机）→ [ZooKeeper.md](中间件/ZooKeeper.md#17-集群节点角色与分工-)
 - [x] ZAB协议（ZXID结构 / 消息广播 / Leader选举 / DIFF•SNAP•TRUNC三种同步模式）→ [ZooKeeper.md](中间件/ZooKeeper.md#二zab-协议zookeeper-atomic-broadcast-)
 - [x] ZAB vs Raft 对比 → [ZooKeeper.md](中间件/ZooKeeper.md#28-zab-vs-raft-对比字节爱问)
 - [x] 分布式锁（临时顺序节点原理 + Curator代码 / ZK vs Redis锁对比）→ [ZooKeeper.md](中间件/ZooKeeper.md#三分布式锁实现原理-)
 - [x] 应用场景（服务注册/配置中心/Master选举/分布式屏障Barrier）→ [ZooKeeper.md](中间件/ZooKeeper.md#四典型应用场景-)
 - [x] 与Nacos/Eureka/etcd对比（CP vs AP / 为何不适合做注册中心）→ [ZooKeeper.md](中间件/ZooKeeper.md#五与-nacos--eureka--etcd-对比-)
+- [x] 集群配置与运维（zoo.cfg参数 / myid / 读写路由强一致 / 四字命令mntr / 动态扩缩容）→ [ZooKeeper.md](中间件/ZooKeeper.md#六集群配置与运维-)
 
 ---
 
