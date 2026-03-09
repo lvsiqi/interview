@@ -46,11 +46,11 @@ features:
   - icon: 🌍
     title: 网络与操作系统
     details: TCP三次握手/四次挥手、HTTP/HTTPS、零拷贝、IO模型、Reactor/Epoll原理
-    link: /其他专题/网络与操作系统
+    link: /底层知识/网络与操作系统
   - icon: 🧮
     title: 算法与数据结构
-    details: 链表、树、动态规划、回溯、排序算法、滑动窗口、图论等7大专题
-    link: /其他专题/算法与数据结构
+    details: 链表、树、动态规划、回溯、排序算法、滑动窗口、图论箙7大专题
+    link: /底层知识/算法与数据结构
   - icon: 🔥
     title: 场景题与故障排查
     details: CPU飙高、OOM定位、接口超时、慢查询优化、缓存一致性方案实战

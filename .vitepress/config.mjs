@@ -69,10 +69,15 @@ export default defineConfig({
         ]
       },
       {
+        text: '底层知识',
+        items: [
+          { text: '网络与操作系统', link: '/底层知识/网络与操作系统' },
+          { text: '算法与数据结构', link: '/底层知识/算法与数据结构' }
+        ]
+      },
+      {
         text: '其他专题',
         items: [
-          { text: '网络与操作系统', link: '/其他专题/网络与操作系统' },
-          { text: '算法与数据结构', link: '/其他专题/算法与数据结构' },
           { text: '场景题与故障排查', link: '/其他专题/场景题与故障排查' },
           { text: '设计模式', link: '/其他专题/设计模式' },
           { text: 'HR与软技能', link: '/其他专题/HR与软技能' },
@@ -158,11 +163,17 @@ export default defineConfig({
         ]
       },
       {
+        text: '🧱 底层知识',
+        collapsed: false,
+        items: [
+          { text: '网络与操作系统', link: '/底层知识/网络与操作系统' },
+          { text: '算法与数据结构', link: '/底层知识/算法与数据结构' }
+        ]
+      },
+      {
         text: '📚 其他专题',
         collapsed: false,
         items: [
-          { text: '网络与操作系统', link: '/其他专题/网络与操作系统' },
-          { text: '算法与数据结构', link: '/其他专题/算法与数据结构' },
           { text: '场景题与故障排查', link: '/其他专题/场景题与故障排查' },
           { text: '设计模式', link: '/其他专题/设计模式' },
           { text: 'HR与软技能', link: '/其他专题/HR与软技能' },
