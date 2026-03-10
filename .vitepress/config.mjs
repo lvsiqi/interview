@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import { mermaidPlugin } from './mermaid-plugin.mjs'
 
 export default defineConfig({
   title: 'Java面试知识库',
@@ -8,6 +9,12 @@ export default defineConfig({
 
   // 忽略死链（中文路径在某些环境可能检测误报）
   ignoreDeadLinks: true,
+
+  markdown: {
+    config: (md) => {
+      md.use(mermaidPlugin)
+    }
+  },
 
   themeConfig: {
     logo: '/favicon.svg',

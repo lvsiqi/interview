@@ -1,0 +1,259 @@
+/* ========================================
+   Java面试知识库 - 自定义主题样式
+   ======================================== */
+
+/* ---------- 1. 品牌色调整 ---------- */
+:root {
+  --vp-c-brand-1: #3451b2;
+  --vp-c-brand-2: #2c3e8f;
+  --vp-c-brand-3: #1a2563;
+  --vp-c-brand-soft: rgba(52, 81, 178, 0.14);
+
+  /* 首页 hero 渐变 */
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(135deg, #3451b2 10%, #e84d70 100%);
+  --vp-home-hero-image-background-image: linear-gradient(135deg, #3451b240 50%, #e84d7040 50%);
+  --vp-home-hero-image-filter: blur(44px);
+}
+
+.dark {
+  --vp-c-brand-1: #6b8de5;
+  --vp-c-brand-2: #5a7bd4;
+  --vp-c-brand-3: #4a6bc4;
+  --vp-c-brand-soft: rgba(107, 141, 229, 0.16);
+}
+
+/* ---------- 2. 代码块高亮配色增强 ---------- */
+
+/* 代码块容器 */
+.vp-doc div[class*='language-'] {
+  border-radius: 8px;
+  border: 1px solid var(--vp-c-divider);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.dark .vp-doc div[class*='language-'] {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 代码块语言标签 */
+.vp-doc div[class*='language-']::before {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--vp-c-text-3);
+}
+
+/* 行内代码 */
+.vp-doc :not(pre) > code {
+  background-color: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand-1);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.dark .vp-doc :not(pre) > code {
+  background-color: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand-1);
+}
+
+/* 代码块高亮行 */
+.vp-doc div[class*='language-'] code .highlighted {
+  background-color: rgba(52, 81, 178, 0.1);
+  border-left: 3px solid var(--vp-c-brand-1);
+  margin-left: -4px;
+  padding-left: 1px;
+}
+
+.dark .vp-doc div[class*='language-'] code .highlighted {
+  background-color: rgba(107, 141, 229, 0.12);
+}
+
+/* ---------- 3. 知识点标签组件样式 ---------- */
+
+/* 用法: <Badge type="tip" text="高频" /> 或自定义 span */
+/* 高频考点 */
+.tag-hot,
+.vp-doc .tag-hot {
+  display: inline-block;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin: 0 4px;
+  vertical-align: middle;
+  line-height: 1.6;
+}
+
+/* 重要知识点 */
+.tag-important,
+.vp-doc .tag-important {
+  display: inline-block;
+  background: linear-gradient(135deg, #f9ca24, #f0932b);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin: 0 4px;
+  vertical-align: middle;
+  line-height: 1.6;
+}
+
+/* 新增知识点 */
+.tag-new,
+.vp-doc .tag-new {
+  display: inline-block;
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin: 0 4px;
+  vertical-align: middle;
+  line-height: 1.6;
+}
+
+/* 基础知识 */
+.tag-basic,
+.vp-doc .tag-basic {
+  display: inline-block;
+  background: linear-gradient(135deg, #00b894, #00cec9);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin: 0 4px;
+  vertical-align: middle;
+  line-height: 1.6;
+}
+
+/* 进阶 */
+.tag-advanced,
+.vp-doc .tag-advanced {
+  display: inline-block;
+  background: linear-gradient(135deg, #3451b2, #6b8de5);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin: 0 4px;
+  vertical-align: middle;
+  line-height: 1.6;
+}
+
+/* 字节跳动高频 */
+.tag-byte,
+.vp-doc .tag-byte {
+  display: inline-block;
+  background: linear-gradient(135deg, #1890ff, #096dd9);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin: 0 4px;
+  vertical-align: middle;
+  line-height: 1.6;
+}
+
+/* ---------- 4. 自定义容器美化 ---------- */
+
+/* tip/warning/danger/info 容器圆角增强 */
+.vp-doc .custom-block {
+  border-radius: 8px;
+  padding: 16px 20px;
+}
+
+.vp-doc .custom-block .custom-block-title {
+  font-weight: 700;
+}
+
+/* ---------- 5. 表格样式增强 ---------- */
+.vp-doc table {
+  border-radius: 8px;
+  overflow: hidden;
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+.vp-doc table th {
+  background-color: var(--vp-c-brand-soft);
+  font-weight: 700;
+}
+
+.dark .vp-doc table th {
+  background-color: rgba(107, 141, 229, 0.1);
+}
+
+.vp-doc table tr:hover td {
+  background-color: var(--vp-c-bg-soft);
+}
+
+/* ---------- 6. 侧边栏分组图标对齐 ---------- */
+.VPSidebarItem .text {
+  line-height: 1.6;
+}
+
+/* ---------- 7. 页面内容宽度优化 ---------- */
+.VPDoc.has-aside .content-container {
+  max-width: 820px;
+}
+
+/* ---------- 8. 滚动条美化 ---------- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--vp-c-divider);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--vp-c-text-3);
+}
+
+/* ---------- 9. Mermaid 图表样式 ---------- */
+.mermaid-wrapper {
+  margin: 16px 0;
+  padding: 20px;
+  background: var(--vp-c-bg-soft);
+  border-radius: 8px;
+  border: 1px solid var(--vp-c-divider);
+  overflow-x: auto;
+}
+
+.mermaid-wrapper svg {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+}
+
+/* ---------- 10. 首页 Feature 卡片增强 ---------- */
+.VPFeatures .VPFeature {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.VPFeatures .VPFeature:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.dark .VPFeatures .VPFeature:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* ---------- 11. checkbox 列表美化 (全景提纲) ---------- */
+.vp-doc ul li input[type="checkbox"] {
+  accent-color: var(--vp-c-brand-1);
+  margin-right: 6px;
+}
