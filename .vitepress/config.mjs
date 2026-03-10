@@ -19,6 +19,7 @@ export default defineConfig({
       {
         text: 'Java核心',
         items: [
+          { text: 'Java基础', link: '/Java核心/Java基础' },
           { text: 'JVM', link: '/Java核心/JVM' },
           { text: '并发编程', link: '/Java核心/并发编程' },
           { text: '集合框架', link: '/Java核心/集合框架' },
@@ -29,7 +30,8 @@ export default defineConfig({
         text: '数据库',
         items: [
           { text: 'MySQL', link: '/数据库/MySQL' },
-          { text: 'Redis', link: '/数据库/Redis' }
+          { text: 'Redis', link: '/数据库/Redis' },
+          { text: '连接池', link: '/数据库/连接池' }
         ]
       },
       {
@@ -43,56 +45,40 @@ export default defineConfig({
         ]
       },
       {
-        text: 'IO与网络框架',
+        text: '架构与分布式',
         items: [
-          { text: 'IO模型详解', link: '/IO与网络框架/IO模型详解' },
-          { text: 'Netty', link: '/IO与网络框架/Netty' },
-          { text: 'RPC与gRPC', link: '/IO与网络框架/RPC与gRPC' }
-        ]
-      },
-      {
-        text: '分布式',
-        items: [
+          { text: '高并发方案', link: '/架构设计/高并发方案' },
+          { text: '微服务架构', link: '/架构设计/微服务架构' },
+          { text: '系统设计题', link: '/架构设计/系统设计题' },
+          { text: 'DDD领域驱动', link: '/架构设计/DDD领域驱动设计' },
+          { text: '设计模式', link: '/架构设计/设计模式' },
           { text: '分布式理论', link: '/分布式/分布式理论' },
           { text: '分布式事务', link: '/分布式/分布式事务' },
           { text: '分布式锁', link: '/分布式/分布式锁' }
         ]
       },
       {
-        text: '架构设计',
-        items: [
-          { text: '高并发方案', link: '/架构设计/高并发方案' },
-          { text: '微服务架构', link: '/架构设计/微服务架构' },
-          { text: '系统设计题', link: '/架构设计/系统设计题' },
-          { text: 'DDD领域驱动', link: '/架构设计/DDD领域驱动设计' }
-        ]
-      },
-      {
-        text: '框架',
+        text: '框架 & IO',
         items: [
           { text: 'Spring', link: '/框架/Spring' },
           { text: 'SpringBoot', link: '/框架/SpringBoot' },
-          { text: 'MyBatis', link: '/框架/MyBatis' }
+          { text: 'MyBatis', link: '/框架/MyBatis' },
+          { text: 'IO模型详解', link: '/IO与网络框架/IO模型详解' },
+          { text: 'Netty', link: '/IO与网络框架/Netty' },
+          { text: 'RPC与gRPC', link: '/IO与网络框架/RPC与gRPC' }
         ]
       },
       {
-        text: '底层知识',
+        text: '基础 & 安全',
         items: [
-          { text: '网络与操作系统', link: '/底层知识/网络与操作系统' },
-          { text: '算法与数据结构', link: '/底层知识/算法与数据结构' }
+          { text: '网络与操作系统', link: '/计算机基础/网络与操作系统' },
+          { text: '算法与数据结构', link: '/计算机基础/算法与数据结构' },
+          { text: 'Web安全与认证鉴权', link: '/安全/安全' },
+          { text: '云原生与K8s', link: '/云原生/云原生与K8s' },
+          { text: 'DevOps与CI/CD', link: '/云原生/DevOps与CICD' }
         ]
       },
-      {
-        text: '其他专题',
-        items: [
-          { text: '场景题与故障排查', link: '/其他专题/场景题与故障排查' },
-          { text: '设计模式', link: '/其他专题/设计模式' },
-          { text: 'HR与软技能', link: '/其他专题/HR与软技能' },
-          { text: 'Web安全', link: '/其他专题/安全' },
-          { text: '云原生与K8s', link: '/其他专题/云原生与K8s' }
-        ]
-      },
-      { text: '高频题精选', link: '/面试题汇总/高频题精选' }
+      { text: '🔥 高频题精选', link: '/面试实战/高频题精选' }
     ],
 
     sidebar: [
@@ -104,17 +90,20 @@ export default defineConfig({
         ]
       },
       {
-        text: '🎯 面试题汇总',
+        text: '🎯 面试实战',
         collapsed: false,
         items: [
-          { text: '高频题精选', link: '/面试题汇总/高频题精选' },
-          { text: '每日一题', link: '/面试题汇总/每日一题' }
+          { text: '高频题精选', link: '/面试实战/高频题精选' },
+          { text: '每日一题', link: '/面试实战/每日一题' },
+          { text: '场景题与故障排查', link: '/面试实战/场景题与故障排查' },
+          { text: 'HR与软技能', link: '/面试实战/HR与软技能' }
         ]
       },
       {
         text: '☕ Java核心',
-        collapsed: false,
+        collapsed: true,
         items: [
+          { text: 'Java基础', link: '/Java核心/Java基础' },
           { text: 'JVM 虚拟机', link: '/Java核心/JVM' },
           { text: '并发编程', link: '/Java核心/并发编程' },
           { text: '集合框架', link: '/Java核心/集合框架' },
@@ -123,15 +112,16 @@ export default defineConfig({
       },
       {
         text: '🗄️ 数据库',
-        collapsed: false,
+        collapsed: true,
         items: [
           { text: 'MySQL', link: '/数据库/MySQL' },
-          { text: 'Redis', link: '/数据库/Redis' }
+          { text: 'Redis', link: '/数据库/Redis' },
+          { text: '连接池', link: '/数据库/连接池' }
         ]
       },
       {
         text: '⚙️ 中间件',
-        collapsed: false,
+        collapsed: true,
         items: [
           { text: 'Kafka', link: '/中间件/Kafka' },
           { text: 'RocketMQ', link: '/中间件/RocketMQ' },
@@ -142,7 +132,7 @@ export default defineConfig({
       },
       {
         text: '🔌 IO与网络框架',
-        collapsed: false,
+        collapsed: true,
         items: [
           { text: 'IO模型详解', link: '/IO与网络框架/IO模型详解' },
           { text: 'Netty', link: '/IO与网络框架/Netty' },
@@ -151,7 +141,7 @@ export default defineConfig({
       },
       {
         text: '🌐 分布式',
-        collapsed: false,
+        collapsed: true,
         items: [
           { text: '分布式理论 (CAP/Raft)', link: '/分布式/分布式理论' },
           { text: '分布式事务', link: '/分布式/分布式事务' },
@@ -160,17 +150,18 @@ export default defineConfig({
       },
       {
         text: '🏗️ 架构设计',
-        collapsed: false,
+        collapsed: true,
         items: [
           { text: '高并发方案', link: '/架构设计/高并发方案' },
           { text: '微服务架构', link: '/架构设计/微服务架构' },
           { text: '系统设计题', link: '/架构设计/系统设计题' },
-          { text: 'DDD领域驱动设计', link: '/架构设计/DDD领域驱动设计' }
+          { text: 'DDD领域驱动设计', link: '/架构设计/DDD领域驱动设计' },
+          { text: '🧩 设计模式', link: '/架构设计/设计模式' }
         ]
       },
       {
         text: '🔧 框架',
-        collapsed: false,
+        collapsed: true,
         items: [
           { text: 'Spring', link: '/框架/Spring' },
           { text: 'SpringBoot', link: '/框架/SpringBoot' },
@@ -178,22 +169,26 @@ export default defineConfig({
         ]
       },
       {
-        text: '🧱 底层知识',
-        collapsed: false,
+        text: '💻 计算机基础',
+        collapsed: true,
         items: [
-          { text: '网络与操作系统', link: '/底层知识/网络与操作系统' },
-          { text: '算法与数据结构', link: '/底层知识/算法与数据结构' }
+          { text: '网络与操作系统', link: '/计算机基础/网络与操作系统' },
+          { text: '算法与数据结构', link: '/计算机基础/算法与数据结构' }
         ]
       },
       {
-        text: '📚 其他专题',
-        collapsed: false,
+        text: '🔐 安全',
+        collapsed: true,
         items: [
-          { text: '场景题与故障排查', link: '/其他专题/场景题与故障排查' },
-          { text: '设计模式', link: '/其他专题/设计模式' },
-          { text: 'HR与软技能', link: '/其他专题/HR与软技能' },
-          { text: '🔐 Web安全', link: '/其他专题/安全' },
-          { text: '☁️ 云原生与K8s', link: '/其他专题/云原生与K8s' }
+          { text: 'Web安全与认证鉴权', link: '/安全/安全' }
+        ]
+      },
+      {
+        text: '☁️ 云原生',
+        collapsed: true,
+        items: [
+          { text: '云原生与K8s', link: '/云原生/云原生与K8s' },
+          { text: 'DevOps与CI/CD', link: '/云原生/DevOps与CICD' }
         ]
       }
     ],

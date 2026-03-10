@@ -15,7 +15,8 @@
 | 五 | AIO 详解（异步回调/CompletionHandler） | ⭐⭐⭐ | ✅ |
 | 六 | 多路复用底层：select / poll / epoll 深度对比 | ⭐⭐⭐⭐⭐ | ✅ |
 | 七 | 三种 IO 模型综合对比 & 选型 | ⭐⭐⭐⭐ | ✅ |
-| 八 | 高频追问汇总 | ⭐⭐⭐⭐ | ✅ |
+| 八 | Reactor 模式（单线程/多线程/主从/Proactor对比）| ⭐⭐⭐⭐⭐ | ✅ |
+| 九 | 高频追问汇总 | ⭐⭐⭐⭐ | ✅ |
 
 ---
 
@@ -603,7 +604,203 @@ Java 服务端开发（Linux 部署）：
 
 ---
 
-## 八、高频追问汇总 ⭐⭐⭐⭐
+## 八、Reactor 模式 ⭐⭐⭐⭐⭐
+
+> Reactor 是构建在 IO 多路复用之上的**并发 IO 编程模型**，是 Netty / Nginx / Redis 的理论基础。
+
+### 8.1 核心思想
+
+Reactor 模式（也叫事件驱动模式）是一种处理并发 IO 的设计模式：
+
+```
+核心角色：
+┌─────────────────────────────────────────────────────────────┐
+│  Reactor（反应堆）                                          │
+│    负责监听事件（accept/read/write），事件就绪后分发给 Handler │
+│                                                             │
+│  Acceptor                                                   │
+│    处理新连接事件（OP_ACCEPT），将连接注册给后续 Reactor       │
+│                                                             │
+│  Handler                                                    │
+│    处理具体的 IO 事件（读数据、编解码、业务逻辑、写回）         │
+└─────────────────────────────────────────────────────────────┘
+
+事件循环（Event Loop）：
+  while (true) {
+      select/epoll 阻塞等待事件
+      for each 就绪事件:
+          dispatch 到对应 Handler
+  }
+```
+
+### 8.2 单 Reactor 单线程（Redis 6.0 之前的命令处理）
+
+```
+                  ┌──────────────────────────────┐
+                  │       单线程 Reactor           │
+                  │                              │
+Client ──connect──→  Acceptor                   │
+Client ──read──────→  Handler1  → 业务处理 → write │
+Client ──read──────→  Handler2  → 业务处理 → write │
+                  └──────────────────────────────┘
+
+一个线程负责：accept + read + 业务处理 + write
+```
+
+```java
+// 简化版单 Reactor 单线程示意
+public class SingleReactor implements Runnable {
+    private final Selector selector;
+    private final ServerSocketChannel serverChannel;
+
+    public void run() {
+        while (true) {
+            selector.select();  // 阻塞等待任意事件就绪
+            Iterator<SelectionKey> it = selector.selectedKeys().iterator();
+            while (it.hasNext()) {
+                SelectionKey key = it.next();
+                it.remove();
+                if (key.isAcceptable()) {
+                    // 新连接：注册读事件
+                    SocketChannel client = serverChannel.accept();
+                    client.configureBlocking(false);
+                    client.register(selector, SelectionKey.OP_READ);
+                } else if (key.isReadable()) {
+                    // 读数据 + 业务处理 + 写回 → 全在本线程
+                    handle(key);
+                }
+            }
+        }
+    }
+}
+```
+
+**优点：** 实现简单，无锁，无线程切换开销  
+**缺点：** 单线程，业务处理阻塞会影响所有连接；无法利用多核  
+**代表：** Redis 6.0 之前（命令处理单线程，IO 读写也是）
+
+### 8.3 单 Reactor 多线程
+
+```
+                  ┌─────────────────────────────────────────┐
+                  │  Reactor 线程（只负责 IO 事件分发）        │
+                  │                                         │
+Client ──connect──→  Acceptor                              │
+Client ──read──────→  Handler（只做 read + write，不做业务）  │
+                  └─────────────┬───────────────────────────┘
+                                │ 业务处理任务投递
+                                ▼
+                  ┌─────────────────────────────────────────┐
+                  │  业务线程池（Thread Pool）                │
+                  │  Worker1 / Worker2 / ... / WorkerN       │
+                  │  负责：解码 + 业务逻辑 + 编码             │
+                  └─────────────────────────────────────────┘
+```
+
+**优点：** IO 和业务解耦，业务处理不阻塞 Reactor；可利用多核处理业务  
+**缺点：** Reactor 单线程仍是瓶颈（高并发接入时 accept + IO 都压在一个线程上）
+
+### 8.4 主从 Reactor 多线程（生产主流，Netty 默认）
+
+```
+客户端连接
+    │
+    ▼
+┌───────────────────────────────────────────────────────────────┐
+│  MainReactor（1 个线程，只处理 accept）                        │
+│  监听 ServerSocketChannel 的 OP_ACCEPT 事件                    │
+└──────────────────────┬────────────────────────────────────────┘
+                       │ 新连接建立后，将 SocketChannel 注册给 SubReactor
+                       ▼
+┌──────────────────────────────────────────────────────┐
+│  SubReactor 池（N 个线程，每个线程维护自己的 Selector） │
+│                                                      │
+│  SubReactor-0: 监听连接 C1、C4、C7... 的 read/write   │
+│  SubReactor-1: 监听连接 C2、C5、C8... 的 read/write   │
+│  SubReactor-2: 监听连接 C3、C6、C9... 的 read/write   │
+└────────────────────────┬─────────────────────────────┘
+                         │ IO 完成后，投递到业务线程池
+                         ▼
+┌──────────────────────────────────────────────────────┐
+│  业务线程池（解码 + 业务逻辑 + 编码）                  │
+└──────────────────────────────────────────────────────┘
+```
+
+**Netty 完整实现：**
+
+```java
+// MainReactor：bossGroup（默认1线程，只接受连接）
+EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+// SubReactor：workerGroup（默认 CPU*2 线程，每个 EventLoop 一个 Selector）
+EventLoopGroup workerGroup = new NioEventLoopGroup();
+
+try {
+    ServerBootstrap b = new ServerBootstrap();
+    b.group(bossGroup, workerGroup)
+     .channel(NioServerSocketChannel.class)
+     .option(ChannelOption.SO_BACKLOG, 1024)           // 连接队列大小
+     .childOption(ChannelOption.SO_KEEPALIVE, true)    // 开启心跳
+     .childHandler(new ChannelInitializer<SocketChannel>() {
+         @Override
+         protected void initChannel(SocketChannel ch) {
+             ChannelPipeline p = ch.pipeline();
+             p.addLast(new LengthFieldBasedFrameDecoder(65536, 0, 4)); // 解决粘包
+             p.addLast(new MyDecoder());      // 反序列化
+             p.addLast(businessExecutor,      // 业务处理放独立线程池
+                       new MyBusinessHandler());
+             p.addLast(new MyEncoder());      // 序列化
+         }
+     });
+
+    ChannelFuture f = b.bind(8080).sync();
+    f.channel().closeFuture().sync();
+} finally {
+    bossGroup.shutdownGracefully();
+    workerGroup.shutdownGracefully();
+}
+```
+
+**Netty 的 Pipeline 模型：**
+
+```
+SocketChannel 收到数据
+    │
+    ▼ InboundHandler 链（从头到尾）
+[LengthFieldDecoder] → [MyDecoder] → [MyBusinessHandler]
+                                              │
+                                              ▼ 业务处理完，写回
+[MyEncoder] ← [OutboundHandler 链（从尾到头）]
+    │
+    ▼
+SocketChannel 发送数据
+
+每个 Handler 只做一件事（责任链模式），职责清晰，易扩展
+```
+
+### 8.5 三种 Reactor 模式对比
+
+| | 单 Reactor 单线程 | 单 Reactor 多线程 | 主从 Reactor 多线程 |
+|---|---|---|---|
+| **接受连接** | 主线程 | 主线程 | MainReactor 专用线程 |
+| **IO 读写** | 主线程 | 主线程 | SubReactor 线程池 |
+| **业务处理** | 主线程 | 业务线程池 | 业务线程池 |
+| **多核利用** | ❌ | 部分（业务）| ✅ 全部 |
+| **IO 瓶颈** | 有 | 有（单 Reactor）| 无（多 SubReactor）|
+| **典型应用** | Redis 6.0 之前 | 部分旧版框架 | **Netty / Nginx** |
+
+### 8.6 Reactor vs Proactor
+
+| | Reactor（同步 IO）| Proactor（异步 IO）|
+|---|---|---|
+| **触发时机** | IO **就绪**时通知（你来读）| IO **完成**时通知（读好了给你）|
+| **谁做 IO** | Handler 自己调用 read/write | 内核完成 IO，结果放到缓冲区 |
+| **Linux 支持** | epoll 完善支持 | AIO 支持不成熟 |
+| **代表框架** | Netty、Nginx | Windows IOCP、Boost.Asio |
+| **实际选型** | **Java/Linux 首选 Reactor** | Windows 高性能网络程序 |
+
+---
+
+## 九、高频追问汇总 ⭐⭐⭐⭐
 
 **Q: BIO、NIO、AIO 的核心区别是什么？**
 > BIO 是同步阻塞，一个连接需要一个线程，线程在 read() 时阻塞；NIO 是同步非阻塞，用 Selector 多路复用一个线程监听多个 Channel，数据就绪后同步拷贝；AIO 是异步非阻塞，发起 read 后直接返回，内核完成全部工作后回调通知。Java 服务端在 Linux 上首选 NIO + epoll（Netty），因为 Linux AIO 不成熟，实际是线程池模拟。

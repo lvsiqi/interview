@@ -11,12 +11,14 @@
 |------|------|
 | [README.md](README.md) | 知识库导航（含全景提纲） |
 | **Java核心/** | |
+| [Java核心/Java基础.md](Java核心/Java基础.md) | OOP四大特性、String、equals/hashCode、异常、泛型、反射、注解、序列化、JMM |
 | [Java核心/JVM.md](Java核心/JVM.md) | 内存模型、类加载、GC算法、垃圾收集器、调优 |
 | [Java核心/并发编程.md](Java核心/并发编程.md) | synchronized、volatile、AQS、线程池、ConcurrentHashMap |
 | [Java核心/集合框架.md](Java核心/集合框架.md) | HashMap、ArrayList、CopyOnWriteArrayList、LinkedHashMap/TreeMap、ArrayDeque/PriorityQueue、HashSet/TreeSet |
 | **数据库/** | |
 | [数据库/MySQL.md](数据库/MySQL.md) | 索引、MVCC、锁机制、SQL优化、主从、分库分表 |
 | [数据库/Redis.md](数据库/Redis.md) | 数据结构、持久化、淘汰策略、集群、分布式锁 |
+| [数据库/连接池.md](数据库/连接池.md) | HikariCP原理、Druid监控、参数调优、连接泄漏排查 |
 | **中间件/** | |
 | [中间件/Kafka.md](中间件/Kafka.md) | 架构原理、分区副本、高性能、消费者组、Exactly Once |
 | [中间件/RocketMQ.md](中间件/RocketMQ.md) | 对比Kafka、延迟消息、事务消息、顺序消息、死信队列、存储原理 |
@@ -36,23 +38,26 @@
 | [架构设计/微服务架构.md](架构设计/微服务架构.md) | Spring Cloud、Nacos、Sentinel、Gateway、OpenFeign、服务拆分、链路追踪 |
 | [架构设计/系统设计题.md](架构设计/系统设计题.md) | 秒杀/短链/推送/Feed流/延迟任务/唯一ID（7题）|
 | [架构设计/DDD领域驱动设计.md](架构设计/DDD领域驱动设计.md) | 聚合根/限界上下文/CQRS/事件溯源 |
+| [架构设计/设计模式.md](架构设计/设计模式.md) | 单例/工厂/建造者/代理/装饰器/策略/观察者/模板方法/责任链 |
 | **框架/** | |
 | [框架/Spring.md](框架/Spring.md) | IOC、AOP、事务原理、三级缓存循环依赖 |
 | [框架/SpringBoot.md](框架/SpringBoot.md) | 自动装配原理、@Conditional、自定义Starter、配置体系、启动流程、Actuator |
 | [框架/MyBatis.md](框架/MyBatis.md) | 缓存机制、动态SQL、插件原理、PageHelper |
 | **Java核心/** | |
 | [Java核心/Java新特性.md](Java核心/Java新特性.md) | Lambda、Stream、Optional、Java 9-17新特性、虚拟线程（Java 21） |
-| **其他专题/** | |
-| [其他专题/设计模式.md](其他专题/设计模式.md) | 单例/工厂/建造者/代理/装饰器/策略/观察者/模板方法/责任链 |
-| [底层知识/网络与操作系统.md](底层知识/网络与操作系统.md) | TCP、HTTP/HTTPS、零拷贝、IO模型、Reactor、Epoll |
-| [底层知识/算法与数据结构.md](底层知识/算法与数据结构.md) | 链表/树/DP/回溯/排序/滑动窗口/图论（7专题）|
-| [其他专题/场景题与故障排查.md](其他专题/场景题与故障排查.md) | CPU飙高/OOM/超时/慢查询/缓存一致性（5专题）|
-| [其他专题/HR与软技能.md](其他专题/HR与软技能.md) | STAR法则、冲突处理、职业规划、反问环节 |
-| [其他专题/安全.md](其他专题/安全.md) | JWT/OAuth2/Spring Security/SQL注入/XSS/CSRF/SSRF/HTTPS/OWASP Top 10 |
-| [其他专题/云原生与K8s.md](其他专题/云原生与K8s.md) | Docker原理/K8s架构/Pod调度/Service网络/存储/HPA/Service Mesh/故障排查 |
-| **面试题汇总/** | |
-| [面试题汇总/高频题精选.md](面试题汇总/高频题精选.md) | 32道跨章节高频题（JVM/并发/MySQL/Redis/分布式/系统设计/算法/场景题/HR）含核心答案+追问方向 |
-| [面试题汇总/每日一题.md](面试题汇总/每日一题.md) | 按日期刷题记录 |
+| **计算机基础/** | |
+| [计算机基础/网络与操作系统.md](计算机基础/网络与操作系统.md) | TCP、HTTP/HTTPS、零拷贝、Linux排查命令 |
+| [计算机基础/算法与数据结构.md](计算机基础/算法与数据结构.md) | 链表/树/DP/回溯/排序/滑动窗口/图论（7专题）|
+| **安全/** | |
+| [安全/安全.md](安全/安全.md) | JWT/OAuth2/Spring Security/SQL注入/XSS/CSRF/SSRF/HTTPS/OWASP Top 10 |
+| **云原生/** | |
+| [云原生/云原生与K8s.md](云原生/云原生与K8s.md) | Docker原理/K8s架构/Pod调度/Service网络/存储/HPA/Service Mesh/故障排查 |
+| [云原生/DevOps与CICD.md](云原生/DevOps与CICD.md) | Git工作流、CI/CD、Jenkins/GitHub Actions、蓝绿/金丝雀发布、制品管理 |
+| **面试实战/** | |
+| [面试实战/高频题精选.md](面试实战/高频题精选.md) | 34道跨章节高频题（JVM/并发/MySQL/Redis/分布式/系统设计/算法/场景题/HR）含核心答案+追问方向 |
+| [面试实战/每日一题.md](面试实战/每日一题.md) | 按日期刷题记录 |
+| [面试实战/场景题与故障排查.md](面试实战/场景题与故障排查.md) | CPU飙高/OOM/超时/慢查询/缓存一致性（5专题）|
+| [面试实战/HR与软技能.md](面试实战/HR与软技能.md) | STAR法则、冲突处理、职业规划、反问环节 |
 
 ---
 
@@ -74,7 +79,18 @@
 
 ### 一、☕ Java 核心基础
 
-#### 1.0 Java 新特性
+#### 1.0 Java 基础 ⭐⭐
+- [x] OOP四大特性（封装/继承/多态/抽象）→ [Java基础.md](Java核心/Java基础.md#一面向对象四大特性)
+- [x] String / StringBuilder / StringBuffer → [Java基础.md](Java核心/Java基础.md#二string--stringbuilder--stringbuffer)
+- [x] equals 与 hashCode 契约 → [Java基础.md](Java核心/Java基础.md#三equals-与-hashcode)
+- [x] 异常体系（Checked/Unchecked/try-with-resources）→ [Java基础.md](Java核心/Java基础.md#四异常体系)
+- [x] 泛型与类型擦除（PECS原则）→ [Java基础.md](Java核心/Java基础.md#五泛型)
+- [x] 反射（Class对象/Method/Field/Spring应用）→ [Java基础.md](Java核心/Java基础.md#六反射)
+- [x] 注解（元注解/自定义注解/Spring注解原理）→ [Java基础.md](Java核心/Java基础.md#七注解)
+- [x] 序列化（Java/JSON/Protobuf对比）→ [Java基础.md](Java核心/Java基础.md#八序列化)
+- [x] Java 内存模型 JMM（主内存/工作内存/三大特性）→ [Java基础.md](Java核心/Java基础.md#九java-内存模型-jmm)
+
+#### 1.1 Java 新特性
 - [x] Lambda & 函数式接口 → [Java新特性.md](Java核心/Java新特性.md#11-lambda-表达式)
 - [x] Stream API（filter/map/collect/parallel）→ [Java新特性.md](Java核心/Java新特性.md#12-stream-api-)
 - [x] Optional 用法 → [Java新特性.md](Java核心/Java新特性.md#13-optional-)
@@ -82,14 +98,14 @@
 - [x] Record & Sealed Class（Java 16/17）→ [Java新特性.md](Java核心/Java新特性.md#32-recordjava-16-正式-)
 - [x] 虚拟线程（Java 21）→ [Java新特性.md](Java核心/Java新特性.md#41-虚拟线程virtual-threads-)
 
-#### 1.1 JVM
+#### 1.2 JVM
 - [x] 内存模型（堆、栈、方法区、元空间）→ [JVM.md](Java核心/JVM.md#一jvm-内存模型-)
 - [x] 类加载机制 & 双亲委派 → [JVM.md](Java核心/JVM.md#二类加载机制--双亲委派-)
 - [x] GC算法（标记清除、标记整理、复制算法）→ [JVM.md](Java核心/JVM.md#三gc-算法-)
 - [x] 垃圾收集器（CMS、G1、ZGC对比）→ [JVM.md](Java核心/JVM.md#四垃圾收集器-)
 - [x] JVM调优参数 & OOM排查 → [JVM.md](Java核心/JVM.md#五jvm调优参数--oom排查-)
 
-#### 1.2 并发编程 ⭐⭐⭐
+#### 1.3 并发编程 ⭐⭐⭐
 - [x] synchronized 底层原理（对象头、锁升级）→ [并发编程.md](Java核心/并发编程.md#一synchronized-底层原理--锁升级-)
 - [x] volatile 原理（内存屏障、可见性）→ [并发编程.md](Java核心/并发编程.md#二volatile-原理--内存屏障-)
 - [x] AQS 原理 & ReentrantLock → [并发编程.md](Java核心/并发编程.md#三aqs原理--reentrantlock-)
@@ -98,7 +114,7 @@
 - [x] ConcurrentHashMap 原理 → [并发编程.md](Java核心/并发编程.md#六concurrenthashmap-原理-)
 - [x] happens-before 规则 → [并发编程.md](Java核心/并发编程.md#七happens-before-规则-)
 
-#### 1.3 集合框架
+#### 1.4 集合框架
 - [x] HashMap 源码（扩容、红黑树转换、死循环问题）→ [集合框架.md](Java核心/集合框架.md#一hashmap-源码-)
 - [x] ArrayList vs LinkedList → [集合框架.md](Java核心/集合框架.md#二arraylist-vs-linkedlist-)
 - [x] CopyOnWriteArrayList 原理 → [集合框架.md](Java核心/集合框架.md#三copyonwritearraylist-原理-)
@@ -120,7 +136,14 @@
 - [x] 主从复制原理 → [MySQL.md](数据库/MySQL.md#七主从复制原理-)
 - [x] 分库分表方案 → [MySQL.md](数据库/MySQL.md#八分库分表方案-)
 
-#### 2.2 Redis ⭐⭐⭐
+#### 2.2 连接池
+- [x] 连接池核心原理（复用/参数/生命周期）→ [连接池.md](数据库/连接池.md#一连接池核心原理)
+- [x] HikariCP 深入解析（ConcurrentBag/FastList/为什么最快）→ [连接池.md](数据库/连接池.md#二hikaricp-深入解析)
+- [x] Druid 特性与监控（Filter链/SQL防火墙）→ [连接池.md](数据库/连接池.md#三druid-特性与监控)
+- [x] 参数调优（连接数计算/超时配置）→ [连接池.md](数据库/连接池.md#四参数调优指南)
+- [x] 连接泄漏排查（检测/预防/工具）→ [连接池.md](数据库/连接池.md#五连接泄漏排查)
+
+#### 2.3 Redis ⭐⭐⭐
 - [x] 数据结构及底层实现（SDS、跳表、压缩列表）→ [Redis.md](数据库/Redis.md#一数据结构--底层实现-)
 - [x] 持久化（RDB vs AOF）→ [Redis.md](数据库/Redis.md#二持久化rdb--aof-)
 - [x] 内存淘汰策略（8种策略 / LRU vs LFU）→ [Redis.md](数据库/Redis.md#三内存淘汰策略-)
@@ -304,93 +327,101 @@
 
 ### 八、🌐 网络 & 操作系统
 
-- [x] TCP三次握手、四次挥手 → [网络与操作系统.md](底层知识/网络与操作系统.md#一tcp-三次握手--四次挥手)
-- [x] TCP可靠性保证 → [网络与操作系统.md](底层知识/网络与操作系统.md#二tcp-可靠性保证)
-- [x] HTTP vs HTTPS → [网络与操作系统.md](底层知识/网络与操作系统.md#三http-vs-https)
-- [x] 零拷贝原理 → [网络与操作系统.md](底层知识/网络与操作系统.md#四零拷贝原理)
-- [x] IO模型（BIO/NIO/AIO）→ [网络与操作系统.md](底层知识/网络与操作系统.md#五io-模型bio--nio--aio)
-- [x] Epoll原理 → [网络与操作系统.md](底层知识/网络与操作系统.md#六epoll-原理)
-- [x] Linux常用排查命令 → [网络与操作系统.md](底层知识/网络与操作系统.md#七linux-常用排查命令)
+- [x] TCP三次握手、四次挥手 → [网络与操作系统.md](计算机基础/网络与操作系统.md#一tcp-三次握手--四次挥手)
+- [x] TCP可靠性保证 → [网络与操作系统.md](计算机基础/网络与操作系统.md#二tcp-可靠性保证)
+- [x] HTTP vs HTTPS → [网络与操作系统.md](计算机基础/网络与操作系统.md#三http-vs-https)
+- [x] 零拷贝原理 → [网络与操作系统.md](计算机基础/网络与操作系统.md#四零拷贝原理)
+- [x] IO模型 & Epoll（速览）→ [网络与操作系统.md](计算机基础/网络与操作系统.md#五io-模型--epoll速览) ｜ [IO模型详解](IO与网络框架/IO模型详解.md)
+- [x] Linux常用排查命令 → [网络与操作系统.md](计算机基础/网络与操作系统.md#六linux-常用排查命令)
 
 ---
 
 ### 九、💻 算法 & 数据结构（字节重点）⭐⭐⭐
 
-- [x] 数组、链表、栈、队列 → [算法与数据结构.md](底层知识/算法与数据结构.md#一数组链表栈队列)
-- [x] 二叉树（遍历、BST、红黑树）→ [算法与数据结构.md](底层知识/算法与数据结构.md#二二叉树)
-- [x] 动态规划 → [算法与数据结构.md](底层知识/算法与数据结构.md#三动态规划)
-- [x] 回溯算法 → [算法与数据结构.md](底层知识/算法与数据结构.md#四回溯算法)
-- [x] 排序算法（手写快排、归并）→ [算法与数据结构.md](底层知识/算法与数据结构.md#五排序算法)
-- [x] 滑动窗口、双指针 → [算法与数据结构.md](底层知识/算法与数据结构.md#六滑动窗口--双指针)
-- [x] 图论基础（BFS/DFS）→ [算法与数据结构.md](底层知识/算法与数据结构.md#七图论基础bfs--dfs)
+- [x] 数组、链表、栈、队列 → [算法与数据结构.md](计算机基础/算法与数据结构.md#一数组链表栈队列)
+- [x] 二叉树（遍历、BST、红黑树）→ [算法与数据结构.md](计算机基础/算法与数据结构.md#二二叉树)
+- [x] 动态规划 → [算法与数据结构.md](计算机基础/算法与数据结构.md#三动态规划)
+- [x] 回溯算法 → [算法与数据结构.md](计算机基础/算法与数据结构.md#四回溯算法)
+- [x] 排序算法（手写快排、归并）→ [算法与数据结构.md](计算机基础/算法与数据结构.md#五排序算法)
+- [x] 滑动窗口、双指针 → [算法与数据结构.md](计算机基础/算法与数据结构.md#六滑动窗口--双指针)
+- [x] 图论基础（BFS/DFS）→ [算法与数据结构.md](计算机基础/算法与数据结构.md#七图论基础bfs--dfs)
 
 ---
 
 ### 十、🔍 场景题 & 故障排查
 
-- [x] 线上CPU飙高如何排查 → [场景题与故障排查.md](其他专题/场景题与故障排查.md#一线上-cpu-飙高如何排查)
-- [x] 内存溢出如何排查 → [场景题与故障排查.md](其他专题/场景题与故障排查.md#二内存溢出如何排查)
-- [x] 接口超时如何排查 → [场景题与故障排查.md](其他专题/场景题与故障排查.md#三接口超时如何排查)
-- [x] 数据库慢查询优化 → [场景题与故障排查.md](其他专题/场景题与故障排查.md#四数据库慢查询优化)
-- [x] 缓存与数据库数据一致性 → [场景题与故障排查.md](其他专题/场景题与故障排查.md#五缓存与数据库数据一致性)
+- [x] 线上CPU飙高如何排查 → [场景题与故障排查.md](面试实战/场景题与故障排查.md#一线上-cpu-飙高如何排查)
+- [x] 内存溢出如何排查 → [场景题与故障排查.md](面试实战/场景题与故障排查.md#二内存溢出如何排查)
+- [x] 接口超时如何排查 → [场景题与故障排查.md](面试实战/场景题与故障排查.md#三接口超时如何排查)
+- [x] 数据库慢查询优化 → [场景题与故障排查.md](面试实战/场景题与故障排查.md#四数据库慢查询优化)
+- [x] 缓存与数据库数据一致性 → [场景题与故障排查.md](面试实战/场景题与故障排查.md#五缓存与数据库数据一致性)
 
 ---
 
 ### 十一、🎤 HR & 软技能
 
-- [x] 项目难点 & 亮点提炼 → [HR与软技能.md](其他专题/HR与软技能.md#一项目难点--亮点提炼)
-- [x] 团队协作冲突处理 → [HR与软技能.md](其他专题/HR与软技能.md#二团队协作--冲突处理)
-- [x] 职业规划 → [HR与软技能.md](其他专题/HR与软技能.md#三职业规划)
-- [x] 反问环节 → [HR与软技能.md](其他专题/HR与软技能.md#四反问环节)
+- [x] 项目难点 & 亮点提炼 → [HR与软技能.md](面试实战/HR与软技能.md#一项目难点--亮点提炼)
+- [x] 团队协作冲突处理 → [HR与软技能.md](面试实战/HR与软技能.md#二团队协作--冲突处理)
+- [x] 职业规划 → [HR与软技能.md](面试实战/HR与软技能.md#三职业规划)
+- [x] 反问环节 → [HR与软技能.md](面试实战/HR与软技能.md#四反问环节)
 
 ---
 
 ### 十二、🔐 Web 安全与认证鉴权 ⭐⭐⭐
 
-- [x] JWT 认证机制（结构/签名/Refresh Token）→ [安全.md](其他专题/安全.md#一jwt-认证机制-)
-- [x] OAuth2.0 四种授权模式（授权码/客户端凭证）→ [安全.md](其他专题/安全.md#二oauth20-协议-)
-- [x] Spring Security 过滤器链与认证授权流程 → [安全.md](其他专题/安全.md#三spring-security-原理-)
-- [x] SQL 注入原理与防御（PreparedStatement/#{}/${} ）→ [安全.md](其他专题/安全.md#四sql-注入-)
-- [x] XSS（存储型/反射型/DOM型）与防御 → [安全.md](其他专题/安全.md#五xss-跨站脚本攻击-)
-- [x] CSRF 原理与防御（Token/SameSite Cookie）→ [安全.md](其他专题/安全.md#六csrf-跨站请求伪造-)
-- [x] SSRF 服务端请求伪造（内网穿透/云元数据泄露）→ [安全.md](其他专题/安全.md#七ssrf-服务端请求伪造-)
-- [x] 接口安全设计（防重放/签名/越权）→ [安全.md](其他专题/安全.md#八接口安全设计-)
-- [x] HTTPS/TLS 握手流程（1.2 vs 1.3/证书链验证）→ [安全.md](其他专题/安全.md#十https--tls-原理-)
-- [x] OWASP Top 10 速记 → [安全.md](其他专题/安全.md#九owasp-top-10-速记-)
+- [x] JWT 认证机制（结构/签名/Refresh Token）→ [安全.md](安全/安全.md#一jwt-认证机制-)
+- [x] OAuth2.0 四种授权模式（授权码/客户端凭证）→ [安全.md](安全/安全.md#二oauth20-协议-)
+- [x] Spring Security 过滤器链与认证授权流程 → [安全.md](安全/安全.md#三spring-security-原理-)
+- [x] SQL 注入原理与防御（PreparedStatement/#{}/${} ）→ [安全.md](安全/安全.md#四sql-注入-)
+- [x] XSS（存储型/反射型/DOM型）与防御 → [安全.md](安全/安全.md#五xss-跨站脚本攻击-)
+- [x] CSRF 原理与防御（Token/SameSite Cookie）→ [安全.md](安全/安全.md#六csrf-跨站请求伪造-)
+- [x] SSRF 服务端请求伪造（内网穿透/云元数据泄露）→ [安全.md](安全/安全.md#七ssrf-服务端请求伪造-)
+- [x] 接口安全设计（防重放/签名/越权）→ [安全.md](安全/安全.md#八接口安全设计-)
+- [x] HTTPS/TLS 握手流程（1.2 vs 1.3/证书链验证）→ [安全.md](安全/安全.md#十https--tls-原理-)
+- [x] OWASP Top 10 速记 → [安全.md](安全/安全.md#九owasp-top-10-速记-)
 
 ---
 
 ### 十三、☁️ 云原生与 Kubernetes ⭐⭐⭐
 
-- [x] Docker 原理（Namespace/Cgroups/镜像分层/网络模式）→ [云原生与K8s.md](其他专题/云原生与K8s.md#一docker-核心原理-)
-- [x] K8s 架构（Control Plane/Node组件详解/控制循环）→ [云原生与K8s.md](其他专题/云原生与K8s.md#二kubernetes-整体架构-)
-- [x] 核心资源对象（Pod/Deployment/Service/Ingress/ConfigMap/StatefulSet）→ [云原生与K8s.md](其他专题/云原生与K8s.md#三核心资源对象-)
-- [x] Pod 调度机制（过滤/打分/Taint/亲和性）→ [云原生与K8s.md](其他专题/云原生与K8s.md#四pod-调度机制-)
-- [x] 服务发现与网络（CoreDNS/iptables vs ipvs/CNI）→ [云原生与K8s.md](其他专题/云原生与K8s.md#五服务发现与网络-)
-- [x] 存储（PV/PVC/StorageClass 动态供给）→ [云原生与K8s.md](其他专题/云原生与K8s.md#六存储pvpvc-)
-- [x] 健康检查（liveness/readiness/startup 探针）与 HPA 自动扩缩容 → [云原生与K8s.md](其他专题/云原生与K8s.md#七健康检查与自动扩缩容-)
-- [x] K8s 故障排查（kubectl 命令体系）→ [云原生与K8s.md](其他专题/云原生与K8s.md#八k8s-故障排查-)
-- [x] Service Mesh & Istio（Sidecar/流量治理/金丝雀布局）→ [云原生与K8s.md](其他专题/云原生与K8s.md#九service-mesh--istio-)
+#### 13.1 Docker & K8s
+- [x] Docker 原理（Namespace/Cgroups/镜像分层/网络模式）→ [云原生与K8s.md](云原生/云原生与K8s.md#一docker-核心原理-)
+- [x] K8s 架构（Control Plane/Node组件详解/控制循环）→ [云原生与K8s.md](云原生/云原生与K8s.md#二kubernetes-整体架构-)
+- [x] 核心资源对象（Pod/Deployment/Service/Ingress/ConfigMap/StatefulSet）→ [云原生与K8s.md](云原生/云原生与K8s.md#三核心资源对象-)
+- [x] Pod 调度机制（过滤/打分/Taint/亲和性）→ [云原生与K8s.md](云原生/云原生与K8s.md#四pod-调度机制-)
+- [x] 服务发现与网络（CoreDNS/iptables vs ipvs/CNI）→ [云原生与K8s.md](云原生/云原生与K8s.md#五服务发现与网络-)
+- [x] 存储（PV/PVC/StorageClass 动态供给）→ [云原生与K8s.md](云原生/云原生与K8s.md#六存储pvpvc-)
+- [x] 健康检查（liveness/readiness/startup 探针）与 HPA 自动扩缩容 → [云原生与K8s.md](云原生/云原生与K8s.md#七健康检查与自动扩缩容-)
+- [x] K8s 故障排查（kubectl 命令体系）→ [云原生与K8s.md](云原生/云原生与K8s.md#八k8s-故障排查-)
+- [x] Service Mesh & Istio（Sidecar/流量治理/金丝雀布局）→ [云原生与K8s.md](云原生/云原生与K8s.md#九service-mesh--istio-)
+
+#### 13.2 DevOps 与 CI/CD ⭐⭐
+- [x] Git 工作流（Git Flow/Trunk-Based/分支策略）→ [DevOps与CICD.md](云原生/DevOps与CICD.md#一git-工作流)
+- [x] CI/CD 核心概念（持续集成/交付/部署/Pipeline设计）→ [DevOps与CICD.md](云原生/DevOps与CICD.md#二cicd-核心概念)
+- [x] Jenkins Pipeline as Code → [DevOps与CICD.md](云原生/DevOps与CICD.md#三jenkins-实践)
+- [x] GitHub Actions（Workflow/矩阵构建）→ [DevOps与CICD.md](云原生/DevOps与CICD.md#四github-actions)
+- [x] 发布策略（蓝绿/金丝雀/滚动更新）→ [DevOps与CICD.md](云原生/DevOps与CICD.md#五发布策略)
+- [x] 制品管理与镜像（Harbor/Docker镜像优化）→ [DevOps与CICD.md](云原生/DevOps与CICD.md#六制品管理与镜像)
 
 ---
 
 ### 十四、🧩 设计模式
 
-- [x] 单例模式（双重检查锁/静态内部类/枚举）→ [设计模式.md](其他专题/设计模式.md#11-单例模式-)
-- [x] 工厂模式（简单工厂/抽象工厂）→ [设计模式.md](其他专题/设计模式.md#12-工厂模式-)
-- [x] 建造者模式 → [设计模式.md](其他专题/设计模式.md#13-建造者模式-)
-- [x] 代理模式（JDK动态代理 / CGLIB）→ [设计模式.md](其他专题/设计模式.md#21-代理模式-)
-- [x] 装饰器模式 → [设计模式.md](其他专题/设计模式.md#22-装饰器模式-)
-- [x] 策略模式（消除if-else / Spring Map注入）→ [设计模式.md](其他专题/设计模式.md#31-策略模式-)
-- [x] 观察者模式（Spring ApplicationEvent）→ [设计模式.md](其他专题/设计模式.md#32-观察者模式-)
-- [x] 模板方法模式（AQS / JdbcTemplate）→ [设计模式.md](其他专题/设计模式.md#33-模板方法模式-)
-- [x] 责任链模式（Netty Pipeline / Spring Security）→ [设计模式.md](其他专题/设计模式.md#34-责任链模式-)
+- [x] 单例模式（双重检查锁/静态内部类/枚举）→ [设计模式.md](架构设计/设计模式.md#11-单例模式-)
+- [x] 工厂模式（简单工厂/抽象工厂）→ [设计模式.md](架构设计/设计模式.md#12-工厂模式-)
+- [x] 建造者模式 → [设计模式.md](架构设计/设计模式.md#13-建造者模式-)
+- [x] 代理模式（JDK动态代理 / CGLIB）→ [设计模式.md](架构设计/设计模式.md#21-代理模式-)
+- [x] 装饰器模式 → [设计模式.md](架构设计/设计模式.md#22-装饰器模式-)
+- [x] 策略模式（消除if-else / Spring Map注入）→ [设计模式.md](架构设计/设计模式.md#31-策略模式-)
+- [x] 观察者模式（Spring ApplicationEvent）→ [设计模式.md](架构设计/设计模式.md#32-观察者模式-)
+- [x] 模板方法模式（AQS / JdbcTemplate）→ [设计模式.md](架构设计/设计模式.md#33-模板方法模式-)
+- [x] 责任链模式（Netty Pipeline / Spring Security）→ [设计模式.md](架构设计/设计模式.md#34-责任链模式-)
 
 ---
 
 ### 🔥 面试题汇总（冲刺速查）
 
-- [x] 高频题精选（34题，含核心答案+追问） → [高频题精选.md](面试题汇总/高频题精选.md)
+- [x] 高频题精选（34题，含核心答案+追问） → [高频题精选.md](面试实战/高频题精选.md)
   - Java核心：JVM内存/类加载/GC/锁升级/volatile/AQS/线程池/ConcurrentHashMap/HashMap（Q1-Q10）
   - 数据库：B+树/MVCC/索引失效/redo-undo-binlog/Redis为什么快/持久化/缓存三大问题（Q11-Q17）
   - 消息队列：Kafka高吞吐/顺序消费（Q18-Q19）
@@ -401,7 +432,7 @@
   - 场景题：CPU飙高/接口超时（Q29-Q30）
   - 新增：Spring AOP代理/SpringBoot启动优化/Stream选型/虚拟线程（Q31-Q34）
   - 快速记忆口诀
-- [ ] 每日一题 → [每日一题.md](面试题汇总/每日一题.md)
+- [ ] 每日一题 → [每日一题.md](面试实战/每日一题.md)
 
 ---
 
