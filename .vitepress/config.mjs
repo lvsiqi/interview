@@ -97,7 +97,8 @@ export default defineConfig({
         items: [
           { text: '场景题与故障排查', link: '/问题排查/场景题与故障排查' },
           { text: '线上问题监控与排查', link: '/问题排查/线上问题监控与排查' },
-          { text: 'Java服务与中间件排查', link: '/问题排查/Java服务与中间件排查' }
+          { text: 'Java服务与中间件排查', link: '/问题排查/Java服务与中间件排查' },
+          { text: 'Arthas 深度指南', link: '/问题排查/Arthas' }
         ]
       }
     ],
@@ -125,7 +126,8 @@ export default defineConfig({
         items: [
           { text: '场景题与故障排查', link: '/问题排查/场景题与故障排查' },
           { text: '线上问题监控与排查', link: '/问题排查/线上问题监控与排查' },
-          { text: 'Java服务与中间件排查', link: '/问题排查/Java服务与中间件排查' }
+          { text: 'Java服务与中间件排查', link: '/问题排查/Java服务与中间件排查' },
+          { text: 'Arthas 深度指南', link: '/问题排查/Arthas' }
         ]
       },
       {

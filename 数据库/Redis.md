@@ -38,16 +38,220 @@ struct sdshdr {
 - **连锁更新问题**：前节点长度变化可能触发后续所有节点重新编码（最坏O(n)）
 - 数据量小时使用（元素数 < 128，值 < 64字节）
 
-#### ③ skiplist（跳表）—— ZSet核心
+#### ③ skiplist（跳表）—— ZSet核心 ⭐⭐⭐⭐⭐
+
+**跳表结构（Redis 实现）：**
+
+```c
+// Redis 跳表节点
+typedef struct zskiplistNode {
+    sds ele;                          // member（如 "player:1001"）
+    double score;                     // 分值（排序依据）
+    struct zskiplistNode *backward;   // 后退指针（倒序遍历用）
+    struct zskiplistLevel {
+        struct zskiplistNode *forward; // 前进指针
+        unsigned long span;            // 跨度（用于 ZRANK 计算排名）
+    } level[];                        // 柔性数组，层级不固定
+} zskiplistNode;
+
+// Redis 跳表
+typedef struct zskiplist {
+    struct zskiplistNode *header, *tail; // 头尾节点
+    unsigned long length;                // 节点总数
+    int level;                           // 当前最大层级
+} zskiplist;
 ```
-层级3: head → 1 --------→ 5 → tail
-层级2: head → 1 → 3 → 5 → 7 → tail
-层级1: head → 1 → 2 → 3 → 4 → 5 → 6 → 7 → tail
+
+**跳表层数随机决定：**
+
 ```
-- 查找/插入/删除：**平均 O(logN)**
-- **为什么ZSet用跳表不用红黑树？**
-  1. 范围查询更简单（底层链表天然有序）
-  2. 实现更简单，代码可读性高
+层数决定算法（幂次定律）：
+  Level 1:  100%   → 所有节点都在第 1 层
+  Level 2:  25%    → 约 1/4 的节点会升到第 2 层
+  Level 3:  6.25%  → 约 1/16 的节点会升到第 3 层
+  ...
+  最大层级: ZSKIPLIST_MAXLEVEL = 32
+
+代码逻辑：
+  int level = 1;
+  while ((random() & 0xFFFF) < (0.25 * 0xFFFF))  // p = 0.25
+      level++;
+  return min(level, ZSKIPLIST_MAXLEVEL);
+```
+
+**跳表查找过程可视化：**
+
+```
+查找 score=7 的元素：
+
+Level 4: HEAD ───────────────────────→ 9 → NIL
+              ↓
+Level 3: HEAD ─────→ 3 ─────────────→ 9 → NIL
+                     ↓
+Level 2: HEAD → 1 → 3 ─────→ 7 ─────→ 9 → NIL
+                              ↓         ✅ 找到！
+Level 1: HEAD → 1 → 3 → 5 → 7 → 8 → 9 → NIL
+
+查找路径：HEAD(L4) → HEAD(L3) → 3(L3) → 3(L2) → 7(L2) ✅
+比较次数：4 次（vs 链表需 4 次，但数据量大时差距巨大）
+```
+
+**跳表核心操作复杂度：**
+
+| 操作 | 复杂度 | 说明 |
+|------|--------|------|
+| 查找 | O(logN) | 从高层逐层向下 |
+| 插入 | O(logN) | 查找位置 + 随机层数 + 插入 |
+| 删除 | O(logN) | 查找位置 + 修改指针 |
+| 范围查询 | O(logN + M) | 定位起点 + 沿底层链表遍历 M 个元素 |
+| 排名查询 | O(logN) | 利用 span 字段累加计算 |
+
+**span 字段的妙用（ZRANK 原理）：**
+
+```
+ZRANK key member → 返回 member 的排名
+
+计算方式：从头节点到目标节点，沿查找路径累加 span 值
+
+Level 2: HEAD ──(span=1)──→ A ──(span=2)──→ C ──(span=1)──→ NIL
+Level 1: HEAD ──(span=1)──→ A ──(span=1)──→ B ──(span=1)──→ C → NIL
+
+查 C 的排名：HEAD(L2).span=1 + A(L2).span=2 = 3，排名=3-1=2（0-based）
+无需遍历所有节点，O(logN) 即可得到排名！
+```
+
+**⭐ 为什么ZSet用跳表不用红黑树？（面试必问）**
+
+| 维度 | 跳表 | 红黑树 |
+|------|------|--------|
+| 范围查询 | O(logN) 定位 + 链表遍历，天然支持 ZRANGEBYSCORE | 需中序遍历，实现复杂 |
+| 实现复杂度 | ~300 行 C 代码 | ~1000+ 行，旋转/变色逻辑复杂 |
+| 内存局部性 | 链表节点分散，但层数少时接近 | B 树更好，红黑树一般 |
+| 并发友好 | 可做无锁跳表（ConcurrentSkipListMap） | 旋转操作需锁整棵树 |
+| 调试可读性 | 直观，打印即可理解 | 需要可视化工具 |
+
+> **面试答法**：Redis 作者 Antirez 的原话：跳表实现比红黑树简单易调试，范围操作天然高效，且通过调整概率p可以在时间和空间之间灵活权衡。
+
+### 1.2.1 ZSet 完整命令与应用场景 ⭐⭐⭐⭐
+
+**核心命令详解：**
+
+```bash
+# ========== 基础操作 ==========
+ZADD key score member [score member ...]   # 添加/更新成员
+ZSCORE key member                           # 查分数 O(1)
+ZRANK key member                            # 正序排名（0-based） O(logN)
+ZREVRANK key member                         # 倒序排名 O(logN)
+ZCARD key                                   # 成员总数 O(1)
+ZCOUNT key min max                          # 分数区间内的成员数
+ZINCRBY key increment member                # 分数递增（原子操作）
+
+# ========== 范围查询 ==========
+ZRANGE key start stop [WITHSCORES]          # 按排名正序取 O(logN+M)
+ZREVRANGE key start stop [WITHSCORES]       # 按排名倒序取
+ZRANGEBYSCORE key min max [LIMIT offset count]  # 按分数区间
+ZRANGEBYLEX key min max                     # 按字典序（分数相同时）
+
+# ========== 删除操作 ==========
+ZREM key member [member ...]                # 删除成员
+ZREMRANGEBYRANK key start stop              # 按排名范围删除
+ZREMRANGEBYSCORE key min max                # 按分数范围删除
+
+# ========== 集合操作 ==========
+ZUNIONSTORE dest numkeys key1 key2 [WEIGHTS w1 w2] [AGGREGATE SUM|MIN|MAX]
+ZINTERSTORE dest numkeys key1 key2          # 交集
+
+# ========== Redis 6.2+ 统一命令 ==========
+ZRANGE key min max [BYSCORE|BYLEX] [REV] [LIMIT offset count]
+# 统一替代 ZRANGEBYSCORE、ZRANGEBYLEX、ZREVRANGE 等
+```
+
+**⭐ ZSet 经典应用场景：**
+
+**场景一：实时排行榜**
+
+```bash
+# 游戏积分排行榜
+ZADD leaderboard 2500 "player:1001"
+ZADD leaderboard 3200 "player:1002"
+ZADD leaderboard 2800 "player:1003"
+ZINCRBY leaderboard 500 "player:1001"    # 加分（原子操作）
+
+# Top 10 排行
+ZREVRANGE leaderboard 0 9 WITHSCORES
+
+# 查某玩家排名
+ZREVRANK leaderboard "player:1001"       # 0-based，返回 0 表示第一名
+
+# 查某分数段的玩家数
+ZCOUNT leaderboard 2000 3000
+```
+
+**场景二：延迟队列**
+
+```bash
+# 用 score 存执行时间戳
+ZADD delay:queue 1710000060 "order:1001"   # 60 秒后执行
+ZADD delay:queue 1710000120 "order:1002"   # 120 秒后执行
+
+# 消费者轮询：取出已到期的任务
+ZRANGEBYSCORE delay:queue 0 {当前时间戳} LIMIT 0 10
+# 取出后删除（Lua 脚本保证原子性）
+```
+
+```java
+// Java 延迟队列消费者
+public void consumeDelayQueue() {
+    while (true) {
+        long now = System.currentTimeMillis() / 1000;
+        Set<String> tasks = redis.zrangeByScore("delay:queue", 0, now, 0, 10);
+        if (tasks.isEmpty()) { Thread.sleep(500); continue; }
+        for (String task : tasks) {
+            // Lua 原子操作：ZREM 成功才执行（防止并发重复消费）
+            if (redis.zrem("delay:queue", task) > 0) {
+                processTask(task);
+            }
+        }
+    }
+}
+```
+
+**场景三：滑动窗口限流**
+
+```bash
+# 限制：每个用户 60 秒内最多 100 次请求
+# key: rate:limit:{userId}   score: 时间戳   member: 唯一请求ID
+
+MULTI
+ZADD rate:limit:uid123 {now_ms} {request_uuid}   # 记录本次请求
+ZREMRANGEBYSCORE rate:limit:uid123 0 {now_ms - 60000}  # 移除 60s 前的
+ZCARD rate:limit:uid123                            # 当前窗口内请求数
+EXPIRE rate:limit:uid123 61                        # 设过期防内存泄漏
+EXEC
+# 若 ZCARD 结果 > 100 → 拒绝请求
+```
+
+**场景四：带权重的 Timeline / Feed 流**
+
+```bash
+# 用发布时间戳做 score，实现时间线排序
+ZADD feed:user:1001 1710000001 "post:5001"
+ZADD feed:user:1001 1710000050 "post:5002"
+
+# 分页获取 feed（倒序 + 分页）
+ZREVRANGEBYSCORE feed:user:1001 +inf -inf LIMIT 0 20
+```
+
+**ZSet 面试追问补充：**
+
+**Q: ZADD 的时间复杂度是多少？**
+> O(logN)。先在跳表中找到插入位置（O(logN)），然后插入节点并更新 hashtable。如果 member 已存在是更新 score，需要先删旧位置再插新位置。
+
+**Q: ZSet 两个 member 的 score 相同怎么排序？**
+> score 相同时按 member 的字典序（memcmp）排序。可以利用这一特性配合 `ZRANGEBYLEX` 实现字典范围查询。
+
+**Q: ZPOPMIN/ZPOPMAX 有什么用？**
+> Redis 5.0+ 新增，原子弹出最小/最大 score 的元素，适合优先队列场景。`BZPOPMIN` 是阻塞版本，可做阻塞式优先队列。
 
 #### ④ quicklist（List底层，Redis 3.2+）
 - `双向链表，每个节点是一个 ziplist`
@@ -87,22 +291,122 @@ GEORADIUS locations 116.4 39.9 10 km
 
 | 类型 | 小数据编码 | 大数据编码 | 触发条件 |
 |------|-----------|-----------|----------|
-| Hash | ziplist | hashtable | 元素数 > 128 **或** 值长度 > 64 |
-| List | ziplist | quicklist | 元素数 > 512 **或** 值长度 > 64 |
+| String | int / embstr | raw | 值为整数用int；≤44字节用embstr；否则raw |
+| Hash | ziplist（7.0+: listpack） | hashtable | 元素数 > 128 **或** 值长度 > 64 |
+| List | ziplist（7.0+: listpack） | quicklist | 元素数 > 512 **或** 值长度 > 64 |
 | Set | intset | hashtable | 元素数 > 512 **或** 含非整数 |
-| ZSet | ziplist | skiplist+hashtable | 元素数 > 128 **或** 值长度 > 64 |
+| ZSet | ziplist（7.0+: listpack） | skiplist+hashtable | 元素数 > 128 **或** 值长度 > 64 |
 
 ---
 
-### 1.5 面试标准答法
+### 1.5 redisObject 编码体系 ⭐⭐⭐
 
-> Redis有5种基本类型：String底层是SDS，O(1)获取长度、二进制安全；Hash小数据用ziplist，大数据用hashtable；List用quicklist，是ziplist组成的双向链表；Set整数用intset，否则用hashtable；ZSet用跳表+hashtable，跳表支持范围查询O(logN)，hashtable支持O(1)按key查score。
+Redis 中**所有值**都是一个 `redisObject` 结构：
+
+```c
+typedef struct redisObject {
+    unsigned type:4;      // 类型：String/Hash/List/Set/ZSet
+    unsigned encoding:4;  // 编码方式（同一类型可有不同编码）
+    unsigned lru:24;      // LRU时间戳 或 LFU频率+时间
+    int refcount;         // 引用计数（共享对象 / 内存回收）
+    void *ptr;            // 指向实际数据结构的指针
+} robj;
+```
+
+**完整编码类型映射：**
+
+```
+┌──────────┬────────────────────────────────────────────────────┐
+│  type     │  encoding 编码方式                                  │
+├──────────┼────────────────────────────────────────────────────┤
+│  String   │  OBJ_ENCODING_INT      → 8字节 long 直接存值       │
+│           │  OBJ_ENCODING_EMBSTR   → SDS ≤ 44字节，与robj一体  │
+│           │  OBJ_ENCODING_RAW      → SDS > 44字节，独立分配    │
+├──────────┼────────────────────────────────────────────────────┤
+│  Hash     │  OBJ_ENCODING_ZIPLIST  → 压缩列表（≤7.0 listpack）│
+│           │  OBJ_ENCODING_HT       → 哈希表                    │
+├──────────┼────────────────────────────────────────────────────┤
+│  List     │  OBJ_ENCODING_QUICKLIST → quicklist（ziplist双向链表）│
+│           │  (7.0+: quicklist 内部节点从 ziplist → listpack)    │
+├──────────┼────────────────────────────────────────────────────┤
+│  Set      │  OBJ_ENCODING_INTSET   → 整数集合                  │
+│           │  OBJ_ENCODING_HT       → 哈希表                    │
+│           │  OBJ_ENCODING_LISTPACK → (7.2+: 少量非整数元素)    │
+├──────────┼────────────────────────────────────────────────────┤
+│  ZSet     │  OBJ_ENCODING_ZIPLIST  → 压缩列表（≤7.0 listpack）│
+│           │  OBJ_ENCODING_SKIPLIST → 跳表 + 哈希表             │
+└──────────┴────────────────────────────────────────────────────┘
+```
+
+**String 三种编码详解：**
+
+```bash
+# int编码：值为整数（范围 long）
+SET counter 42
+OBJECT ENCODING counter    → "int"
+# 优势：直接存 long，无 SDS 开销；共享对象池（0~9999 可共享）
+
+# embstr编码：字符串 ≤ 44 字节
+SET name "hello"
+OBJECT ENCODING name       → "embstr"
+# 优势：robj + SDS 一次内存分配，CPU 缓存友好
+
+# raw编码：字符串 > 44 字节
+SET bio "this is a very long biography string that exceeds 44 bytes..."
+OBJECT ENCODING bio        → "raw"
+# robj 和 SDS 分开分配，两次 malloc
+
+# ⚠️ 44 字节的由来：
+# robj(16B) + sdshdr8(3B) + 44B + '\0'(1B) = 64B，正好一个 jemalloc 内存块
+```
+
+**查看编码命令：**
+
+```bash
+OBJECT ENCODING key     # 查看 key 的底层编码
+OBJECT REFCOUNT key     # 引用计数
+OBJECT IDLETIME key     # 空闲时间（LRU 模式下）
+OBJECT FREQ key         # 访问频率（LFU 模式下）
+OBJECT HELP             # 帮助信息
+DEBUG OBJECT key        # 调试信息（含编码、序列化大小等）
+```
+
+---
+
+### 1.6 listpack（Redis 7.0+ 替代 ziplist）⭐⭐
+
+**为什么替换 ziplist？**
+
+ziplist 的**连锁更新**问题：每个节点都存储了前一个节点的长度，当某节点变大导致长度编码从 1 字节变 5 字节时，后续所有节点都可能需要重新编码，最坏 O(N²)。
+
+```
+listpack 的改进：
+• 每个节点只记录自己的长度（不存前一个节点的长度）
+• 从后向前遍历时通过自身 entry-len 反向定位，彻底消除连锁更新
+• 内存布局更紧凑
+
+listpack 结构：
+[total-bytes] [num-elements] [entry1] [entry2] ... [end-byte(0xFF)]
+
+每个 entry：
+[encoding-type] [data] [entry-len(回溯用)]
+```
+
+> **面试答法**：Redis 7.0 用 listpack 替代了 ziplist 作为 Hash/ZSet/List 的小数据编码，解决了 ziplist 的连锁更新问题，性能更稳定。
+
+---
+
+### 1.7 面试标准答法
+
+> Redis有5种基本类型。**String** 底层是SDS，有int/embstr/raw三种编码，≤44字节用embstr与robj一体分配更高效。**Hash** 小数据用ziplist（7.0+用listpack），大数据用hashtable。**List** 用quicklist，是ziplist/listpack组成的双向链表。**Set** 整数用intset，否则用hashtable。**ZSet** 用跳表+hashtable双结构，跳表支持O(logN)范围查询和排名计算（span字段），hashtable支持O(1)按member查score。
+>
+> 所有值都是redisObject封装，含type+encoding+lru+refcount+ptr 五个字段。Redis 7.0 用 listpack 替代 ziplist，解决了连锁更新问题。
 >
 > 另有Bitmap做签到统计、HyperLogLog做UV去重（误差0.81%，固定12KB）、Geo（基于ZSet）做地理位置计算。
 
 ---
 
-### 1.6 常见追问
+### 1.8 常见追问
 
 **Q: ZSet为什么同时用跳表和hashtable？**
 > 跳表支持范围查询（ZRANGE），O(logN+M)；hashtable支持O(1)按member查score（ZSCORE）。两者互补，共享数据指针，内存开销可控。
@@ -112,6 +416,15 @@ GEORADIUS locations 116.4 39.9 10 km
 
 **Q: Redis String最大能存多大？**
 > 最大512MB，但实际不建议超过1MB，否则网络传输和序列化开销很大。
+
+**Q: embstr 为什么是 44 字节而不是其他值？**
+> robj(16B) + sdshdr8(3B) + 数据(44B) + '\0'(1B) = 64字节，恰好在 jemalloc 的一个内存分配块内，一次 malloc 即可，CPU 缓存友好且无内存碎片。
+
+**Q: Redis 的 dict（hashtable）渐进式 rehash 是怎么做的？**
+> dict 内部维护两个哈希表 ht[0] 和 ht[1]。扩容/缩容时创建新表 ht[1]，后续每次CRUD操作顺便迁移 ht[0] 的一个桶到 ht[1]（分摊到每次操作），同时定时任务也会批量迁移。查找时先查 ht[0] 再查 ht[1]。全部迁移完成后 ht[0] 指向ht[1]，释放旧表。好处是不会一次性阻塞主线程。
+
+**Q: ZSet 做排行榜，如何实现"积分相同按时间先后排"？**
+> score 设计为：`score = 积分 * 1e13 + (MAX_TS - 时间戳)`。积分高的 score 大排前面；积分相同时时间早的 `MAX_TS - ts` 更大排前面。或者用 Lua 脚本组合两个维度。
 
 ---
 
@@ -773,4 +1086,546 @@ end
 
 **Q: Lua脚本和Pipeline怎么选？**
 > 需要原子性或条件判断用Lua脚本；纯批量操作、对原子性无要求用Pipeline，性能更高。
+
+---
+
+## 九、Redis 线程模型 ⭐⭐⭐⭐⭐
+
+### 9.1 单线程模型（Redis 6.0 之前）
+
+```
+┌──────────────────────────────────────────────────────┐
+│                   Redis 主线程                        │
+│                                                      │
+│   ┌──────────────────────────────────────────┐       │
+│   │         I/O 多路复用 (epoll/kqueue)       │       │
+│   │                                          │       │
+│   │  Socket1 ─┐                              │       │
+│   │  Socket2 ──┤→ 事件循环 → 命令解析         │       │
+│   │  Socket3 ──┤         → 命令执行           │       │
+│   │  Socket4 ─┘         → 结果回写           │       │
+│   └──────────────────────────────────────────┘       │
+│                                                      │
+│   单线程依次处理：网络IO读 → 命令执行 → 网络IO写       │
+│   整个过程在一个线程内完成，没有锁、没有上下文切换       │
+└──────────────────────────────────────────────────────┘
+```
+
+**Redis 单线程为什么这么快？（⭐必问）**
+
+| 原因 | 说明 |
+|------|------|
+| **纯内存操作** | 数据在内存中，读写延迟纳秒级 |
+| **I/O 多路复用** | 一个线程监听多个连接的事件，避免阻塞等待 |
+| **无锁无线程切换** | 省去锁竞争、上下文切换开销 |
+| **高效数据结构** | SDS、跳表、ziplist 等针对场景优化 |
+| **单线程串行执行** | 命令执行本身是顺序的，避免并发问题 |
+| **事件驱动模型** | 基于 Reactor 模式，高效处理连接 |
+
+> **面试答法**：Redis 单线程指的是**命令执行在单线程**中。它快的原因：① 纯内存操作 ② 基于 epoll 的 I/O 多路复用一个线程处理大量连接 ③ 没有锁和线程切换开销 ④ 高效的数据结构。瓶颈不在 CPU 而在网络 IO 和内存。
+
+### 9.2 多线程 I/O（Redis 6.0+）⭐⭐⭐
+
+```
+┌──────────────────────────────────────────────────────────┐
+│                   Redis 6.0+ 线程模型                      │
+│                                                          │
+│   ┌─────────┐  ┌─────────┐  ┌─────────┐                 │
+│   │ IO线程1  │  │ IO线程2  │  │ IO线程3  │  ← 多线程读写   │
+│   │ 读Socket │  │ 读Socket │  │ 读Socket │    网络数据      │
+│   └────┬────┘  └────┬────┘  └────┬────┘                 │
+│        │            │            │                        │
+│        ▼            ▼            ▼                        │
+│   ┌──────────────────────────────────────┐               │
+│   │          主线程（单线程执行命令）       │               │
+│   │    命令解析 → 执行 → 生成响应         │               │
+│   └──────────────────────────────────────┘               │
+│        │            │            │                        │
+│        ▼            ▼            ▼                        │
+│   ┌─────────┐  ┌─────────┐  ┌─────────┐                 │
+│   │ IO线程1  │  │ IO线程2  │  │ IO线程3  │  ← 多线程回写   │
+│   │ 写Socket │  │ 写Socket │  │ 写Socket │    响应数据      │
+│   └─────────┘  └─────────┘  └─────────┘                 │
+└──────────────────────────────────────────────────────────┘
+
+关键：命令执行仍然是单线程，只是网络 IO 读写并行化
+```
+
+**配置开启：**
+
+```bash
+# redis.conf
+io-threads 4          # IO 线程数（含主线程），建议 CPU 核数的一半，不超过 8
+io-threads-do-reads yes  # 读也用多线程（默认只多线程写）
+```
+
+**适用场景**：QPS 极高（10w+）、大 value 传输导致网络 IO 成瓶颈时。一般场景默认单线程即可。
+
+### 9.3 后台线程（一直存在）
+
+```
+即使在 Redis 6.0 之前，Redis 也不是严格的纯单线程：
+
+BIO 线程 1: close(fd)         → 异步关闭文件描述符
+BIO 线程 2: fsync(aof_fd)     → AOF 刷盘
+BIO 线程 3: lazyfree           → 异步释放大对象内存（UNLINK、FLUSHDB ASYNC）
+
+这些后台线程处理耗时的 IO 操作，不影响主线程命令处理
+```
+
+### 9.4 面试标准答法
+
+> Redis 单线程指的是**命令处理在单线程**完成，快的原因是纯内存操作、I/O 多路复用、无锁无上下文切换、高效数据结构。
+>
+> **Redis 6.0** 引入多线程 IO：多个线程并行读写网络数据，但**命令执行仍然单线程**，既利用了多核做网络 IO 又保证了命令执行的线程安全。此外 Redis 一直有后台线程处理 AOF 刷盘、大对象异步释放等耗时操作。
+
+### 9.5 常见追问
+
+**Q: Redis 单线程能用满 CPU 多核吗？**
+> 单实例只能用一个核（命令执行）。生产环境通过部署多个实例（一机多实例 / Cluster 多分片）利用多核。Redis 6.0+ IO 多线程可以利用多核做网络读写。
+
+**Q: Redis 6.0 多线程为什么不把命令执行也并行化？**
+> 核心原因是避免引入锁。Redis 数据结构在设计时不考虑并发安全，如果命令并行化需要加锁，复杂度和开销都会大幅增加。实际瓶颈通常在网络 IO 而非 CPU 命令执行。
+
+**Q: Redis 处理一个命令的完整过程？**
+> ① 客户端发送命令 → ② epoll 监测到可读事件 → ③ 读取请求到输入缓冲区 → ④ 解析 RESP 协议 → ⑤ 查找命令表 → ⑥ 执行命令（操作内存数据结构）→ ⑦ 写入响应到输出缓冲区 → ⑧ epoll 检测可写事件 → ⑨ 回写给客户端。其中 ③⑧⑨ 在 6.0+ 可多线程，⑥ 始终单线程。
+
+---
+
+## 十、内存管理与优化 ⭐⭐⭐
+
+### 10.1 Redis 内存组成
+
+```
+Redis 内存 = 数据内存 + 进程内存 + 缓冲内存 + 内存碎片
+
+数据内存：键值对、过期字典、redisObject、SDS 等
+进程内存：代码段、常驻集、子进程（BGSAVE/BGREWRITEAOF 时 COW 额外占用）
+缓冲内存：客户端输入/输出缓冲区、AOF 缓冲区、复制缓冲区
+内存碎片：频繁 alloc/free 导致的碎片（mem_fragmentation_ratio）
+```
+
+### 10.2 内存信息查看
+
+```bash
+INFO memory
+# used_memory:           Redis 分配器分配的内存总量
+# used_memory_rss:       OS 看到的 Redis 进程占用物理内存
+# mem_fragmentation_ratio: RSS / used_memory
+#   > 1.5 → 碎片严重，需处理
+#   < 1   → 有内存被 swap 到磁盘，性能大降！
+# used_memory_peak:      内存使用峰值
+
+MEMORY USAGE key         # 查看单个 key 内存占用（含 redisObject 开销）
+MEMORY DOCTOR             # 内存诊断建议
+MEMORY STATS              # 详细内存统计
+```
+
+### 10.3 内存优化手段
+
+| 手段 | 说明 |
+|------|------|
+| **选择合适的数据结构** | Hash 替代多个 String 存对象字段，内存可省 50%+ |
+| **控制 key 命名长度** | `u:1001:n` 比 `user:1001:name` 省内存 |
+| **使用小编码** | 控制元素数和值长度让 Hash/ZSet/List 保持 ziplist/listpack 编码 |
+| **整数共享对象** | 0~9999 的整数 String 共享同一 robj，refcount > 1 |
+| **合理设置 TTL** | 避免大量不过期的无用 key 堆积 |
+| **大 Key 拆分** | 拆分为多个小 key |
+| **主动碎片整理** | `activedefrag yes`（Redis 4.0+，基于 jemalloc） |
+| **使用 OBJECT ENCODING** | 确认编码是否符合预期 |
+
+```bash
+# Hash 存对象 vs 多个 String
+# ❌ 300 bytes per key
+SET user:1001:name "Tom"
+SET user:1001:age "25"
+SET user:1001:email "tom@example.com"
+
+# ✅ 只有一个 key 的 redisObject 开销，ziplist 编码更紧凑
+HSET user:1001 name "Tom" age "25" email "tom@example.com"
+# 内存可节省 50% 以上
+```
+
+### 10.4 内存碎片整理（Redis 4.0+）
+
+```bash
+# 开启主动碎片整理
+config set activedefrag yes
+
+# 相关参数
+active-defrag-enabled yes
+active-defrag-ignore-bytes 100mb       # 碎片超过 100MB 才开始
+active-defrag-threshold-lower 10       # 碎片率超过 10% 才开始
+active-defrag-threshold-upper 100      # 碎片率超过 100% 全力执行
+active-defrag-cycle-min 1              # 最小 CPU 占用百分比
+active-defrag-cycle-max 25             # 最大 CPU 占用百分比
+```
+
+### 10.5 面试标准答法
+
+> Redis 内存由数据、进程、缓冲区、碎片四部分组成。用 `INFO memory` 查看，重点关注 `mem_fragmentation_ratio`：大于 1.5 碎片严重需开启 `activedefrag`；小于 1 说明有 swap 性能会剧降。优化手段：Hash 替代多 String、控制元素让数据保持紧凑编码、合理 TTL、大 Key 拆分。
+
+---
+
+## 十一、Pub/Sub 与 Stream ⭐⭐⭐
+
+### 11.1 Pub/Sub 发布订阅
+
+```bash
+# 订阅频道
+SUBSCRIBE channel1 channel2
+
+# 发布消息
+PUBLISH channel1 "hello"
+
+# 模式订阅（通配符）
+PSUBSCRIBE order.*      # 匹配 order.create、order.pay 等
+```
+
+**局限性（⚠️ 面试重点）：**
+
+| 问题 | 说明 |
+|------|------|
+| **消息不持久化** | 不存储消息，订阅者离线期间的消息丢失 |
+| **没有 ACK 机制** | 无法确认消息是否被消费 |
+| **没有消费者组** | 所有订阅者收到相同消息（广播模式），不支持负载均衡 |
+| **无回溯能力** | 无法重新消费历史消息 |
+
+> **适用场景**：实时通知、配置变更广播、聊天室等**允许丢消息**的场景。严肃的消息队列应用推荐 Stream 或外部 MQ。
+
+---
+
+### 11.2 Stream（Redis 5.0+）⭐⭐⭐
+
+Stream 是 Redis 内建的**持久化消息队列**，类似 Kafka 的设计理念。
+
+```
+┌──────────────────────────────────────────────────┐
+│                    Stream                        │
+│                                                  │
+│  ID(时间戳-序号)    field1  value1  field2 value2 │
+│  1710000001-0      user    "tom"   action "buy"  │
+│  1710000002-0      user    "bob"   action "view" │
+│  1710000003-0      user    "tom"   action "pay"  │
+│                                                  │
+│  消费者组 A:                                      │
+│    consumer-1: 已消费到 1710000002-0              │
+│    consumer-2: 已消费到 1710000001-0              │
+│  消费者组 B:                                      │
+│    consumer-3: 已消费到 1710000003-0              │
+└──────────────────────────────────────────────────┘
+```
+
+**核心命令：**
+
+```bash
+# ====== 生产者 ======
+XADD mystream * field1 value1 field2 value2   # * 自动生成ID
+XADD mystream MAXLEN ~ 10000 * msg "hello"    # 限制最大长度（~近似裁剪）
+
+# ====== 独立消费（类似 List）======
+XREAD COUNT 10 BLOCK 5000 STREAMS mystream 0  # 从头开始读
+XREAD COUNT 10 BLOCK 5000 STREAMS mystream $  # 只读新消息（阻塞等待）
+
+# ====== 消费者组（⭐ 核心能力）======
+XGROUP CREATE mystream mygroup 0              # 创建消费者组（从头消费）
+XGROUP CREATE mystream mygroup $ MKSTREAM     # 只消费新消息
+
+XREADGROUP GROUP mygroup consumer-1 COUNT 10 BLOCK 5000 STREAMS mystream >
+#  >  表示读未分配的新消息
+
+# ====== ACK 确认 ======
+XACK mystream mygroup 1710000001-0            # 确认已消费
+
+# ====== 查看待确认消息（PEL）======
+XPENDING mystream mygroup                     # 查看 pending 概况
+XPENDING mystream mygroup - + 10              # 查看具体 pending 消息
+
+# ====== 消息转移（消费者宕机，转给其他消费者）======
+XCLAIM mystream mygroup consumer-2 3600000 1710000001-0  # idle > 1小时的转移
+
+# ====== 管理 ======
+XLEN mystream                                 # 消息数量
+XINFO STREAM mystream                         # Stream 信息
+XINFO GROUPS mystream                         # 消费者组信息
+XINFO CONSUMERS mystream mygroup              # 消费者信息
+XTRIM mystream MAXLEN ~ 10000                 # 裁剪
+XDEL mystream 1710000001-0                    # 删除消息
+```
+
+**Stream vs Pub/Sub vs List vs Kafka 对比：**
+
+| 特性 | Pub/Sub | List | Stream | Kafka |
+|------|---------|------|--------|-------|
+| 持久化 | ❌ | ✅ | ✅ | ✅ |
+| 消费者组 | ❌ | ❌ | ✅ | ✅ |
+| ACK 机制 | ❌ | ❌ | ✅ | ✅ |
+| 消息回溯 | ❌ | ❌ | ✅ | ✅ |
+| 阻塞读取 | ✅ | ✅(BRPOP) | ✅ | ✅ |
+| 吞吐量 | 中 | 中 | 中 | **极高** |
+| 适用场景 | 广播通知 | 简单队列 | 轻量级MQ | 大规模MQ |
+
+> **面试答法**：Redis Stream 是 5.0+ 内建的消息队列，支持消费者组、ACK 确认、pending 列表、消息回溯，适合轻量级消息队列场景。比 Pub/Sub 更可靠（持久化+ACK），比外部 MQ 更轻量。但吞吐量和功能不如 Kafka/RocketMQ，大规模场景仍需专业 MQ。
+
+---
+
+## 十二、Redis 高级应用场景 ⭐⭐⭐⭐
+
+### 12.1 分布式限流
+
+**方案一：固定窗口（INCR + EXPIRE）**
+
+```bash
+# 每分钟限流 100 次
+key = "rate:{ip}:{分钟时间戳}"
+current = INCR key
+if current == 1: EXPIRE key 60
+if current > 100: 拒绝请求
+```
+
+**方案二：滑动窗口（ZSet）**
+
+```lua
+-- Lua 脚本实现滑动窗口限流
+local key = KEYS[1]
+local limit = tonumber(ARGV[1])    -- 限流阈值
+local window = tonumber(ARGV[2])   -- 窗口大小(ms)
+local now = tonumber(ARGV[3])      -- 当前时间(ms)
+
+redis.call('ZREMRANGEBYSCORE', key, 0, now - window)  -- 移除窗口外的
+local count = redis.call('ZCARD', key)
+if count < limit then
+    redis.call('ZADD', key, now, ARGV[4])   -- ARGV[4]=唯一ID
+    redis.call('PEXPIRE', key, window)
+    return 1   -- 允许
+else
+    return 0   -- 拒绝
+end
+```
+
+**方案三：令牌桶（Redis + Lua）**
+
+```lua
+-- 令牌桶算法
+local key = KEYS[1]
+local rate = tonumber(ARGV[1])       -- 每秒放入令牌数
+local capacity = tonumber(ARGV[2])   -- 桶容量
+local now = tonumber(ARGV[3])        -- 当前时间(秒)
+local requested = tonumber(ARGV[4])  -- 请求令牌数
+
+local data = redis.call('HMGET', key, 'tokens', 'timestamp')
+local tokens = tonumber(data[1]) or capacity
+local last_time = tonumber(data[2]) or now
+
+-- 计算新增令牌
+local elapsed = math.max(0, now - last_time)
+tokens = math.min(capacity, tokens + elapsed * rate)
+
+if tokens >= requested then
+    tokens = tokens - requested
+    redis.call('HMSET', key, 'tokens', tokens, 'timestamp', now)
+    redis.call('EXPIRE', key, math.ceil(capacity / rate) + 1)
+    return 1    -- 允许
+else
+    redis.call('HMSET', key, 'tokens', tokens, 'timestamp', now)
+    redis.call('EXPIRE', key, math.ceil(capacity / rate) + 1)
+    return 0    -- 拒绝
+end
+```
+
+### 12.2 分布式 Session
+
+```java
+// Spring Session + Redis 实现分布式 Session
+// 原理：Session 存储在 Redis 而非单机内存，所有节点共享
+
+@Configuration
+@EnableRedisHttpSession(maxInactiveIntervalInSeconds = 1800)
+public class SessionConfig {
+    // Spring 自动将 HttpSession 序列化存到 Redis
+    // Key: spring:session:sessions:{sessionId}
+    // 类型: Hash（存 attributes、creationTime、lastAccessedTime）
+}
+
+// 无需改动业务代码
+request.getSession().setAttribute("user", userObj);
+```
+
+### 12.3 全局唯一 ID 生成
+
+```bash
+# 利用 INCR 原子递增
+INCR order:id:2024:03:11           # 每天一个 key，天然递增
+# 实际 ID = 时间戳(32bit) + 序号(32bit)
+```
+
+```java
+// Java 实现
+public long generateId(String keyPrefix) {
+    long timestamp = LocalDate.now().toEpochDay();  // 天级别
+    long count = stringRedisTemplate.opsForValue()
+        .increment("icr:" + keyPrefix + ":" + timestamp);
+    return timestamp << 32 | count;  // 高32位时间戳 + 低32位序号
+}
+```
+
+### 12.4 分布式 BitMap 统计
+
+```bash
+# 用户连续签到统计（每用户每月一个 Bitmap）
+SETBIT sign:uid:1001:2024:03 0 1    # 3月1日签到
+SETBIT sign:uid:1001:2024:03 1 1    # 3月2日签到
+SETBIT sign:uid:1001:2024:03 3 1    # 3月4日签到
+
+BITCOUNT sign:uid:1001:2024:03      # 本月签到天数 → 3
+
+# 连续签到天数（从今天往前数）
+BITFIELD sign:uid:1001:2024:03 GET u11 0
+# 获取前 11 天的位图，然后应用层右移 & 1 计算连续 1 的个数
+
+# 统计月活用户（所有用户共用一个 Bitmap）
+SETBIT active:2024:03 1001 1         # uid=1001 活跃
+SETBIT active:2024:03 1002 1
+BITCOUNT active:2024:03              # 本月活跃用户数
+# 亿级用户只需约 12MB 内存
+```
+
+---
+
+## 十三、运维与性能优化 ⭐⭐⭐
+
+### 13.1 危险命令与规避
+
+| 命令 | 危险原因 | 替代方案 |
+|------|---------|---------|
+| `KEYS *` | O(N) 全量扫描，阻塞主线程 | `SCAN 0 MATCH pattern COUNT 100`（游标分批）|
+| `FLUSHDB` / `FLUSHALL` | 清空所有数据 | `FLUSHDB ASYNC`（4.0+ 异步）|
+| `DEL bigkey` | 大 Key 同步删除阻塞 | `UNLINK bigkey`（4.0+ 异步）|
+| `MONITOR` | 全量打印命令，性能损耗 50%+ | 只调试用，生产禁止长期开启 |
+| `SAVE` | 同步 RDB 阻塞所有命令 | `BGSAVE` |
+
+```bash
+# 生产环境禁用危险命令
+rename-command KEYS ""
+rename-command FLUSHDB ""
+rename-command FLUSHALL ""
+rename-command DEBUG ""
+```
+
+### 13.2 SCAN 命令详解
+
+```bash
+# SCAN 游标迭代（不阻塞主线程）
+SCAN 0 MATCH "user:*" COUNT 100
+# 返回 [next_cursor, [key1, key2, ...]]
+# cursor=0 表示迭代完成
+
+# 各类型专用 SCAN
+HSCAN key cursor MATCH pattern COUNT count
+SSCAN key cursor MATCH pattern COUNT count
+ZSCAN key cursor MATCH pattern COUNT count
+
+# ⚠️ 注意：
+# 1. 可能返回重复 key（应用层去重）
+# 2. COUNT 是建议值，实际返回数可能不同
+# 3. 迭代过程中新增/删除的 key 可能会或不会被遍历到
+```
+
+### 13.3 慢查询日志
+
+```bash
+# 配置
+slowlog-log-slower-than 10000   # 超过 10ms 记录慢查询（微秒）
+slowlog-max-len 128             # 最多保存 128 条
+
+# 查看
+SLOWLOG GET 10                  # 最近 10 条慢查询
+SLOWLOG LEN                     # 当前慢查询数量
+SLOWLOG RESET                   # 清空
+
+# 每条记录包含：
+# [唯一ID, 时间戳, 耗时(微秒), 命令及参数, 客户端IP, 客户端名]
+```
+
+### 13.4 Redis 性能优化 Checklist
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Redis 性能优化检查清单                          │
+├────────────────┬────────────────────────────────────────────────┤
+│  🔑 Key 设计    │ • key 尽量短（但要有业务含义）                   │
+│                │ • 避免大 Key（String < 1MB，集合 < 1 万元素）    │
+│                │ • 所有 key 设置合理 TTL                          │
+│                │ • 使用 SCAN 替代 KEYS                           │
+├────────────────┼────────────────────────────────────────────────┤
+│  📦 数据结构     │ • Hash 替代多 String 存对象                     │
+│                │ • 控制元素数保持紧凑编码(ziplist/listpack)        │
+│                │ • OBJECT ENCODING 确认编码符合预期               │
+│                │ • 整数值充分利用共享对象（0~9999）                │
+├────────────────┼────────────────────────────────────────────────┤
+│  🚀 命令使用     │ • 批量操作用 MGET/MSET/Pipeline                 │
+│                │ • 删大 Key 用 UNLINK 不用 DEL                   │
+│                │ • 禁止 KEYS/MONITOR/SAVE 等阻塞命令             │
+│                │ • Lua 脚本注意不要太长阻塞主线程                  │
+├────────────────┼────────────────────────────────────────────────┤
+│  💾 持久化       │ • 开启混合持久化 aof-use-rdb-preamble yes      │
+│                │ • AOF 用 everysec 策略                          │
+│                │ • 避免频繁 BGSAVE（控制 save 配置）              │
+│                │ • 预留足够内存给 fork COW（≥ 物理内存的 50%）     │
+├────────────────┼────────────────────────────────────────────────┤
+│  🌐 网络与连接   │ • 使用连接池（maxTotal/maxIdle 合理设置）        │
+│                │ • timeout 设置合理（避免长期空闲连接占资源）       │
+│                │ • tcp-backlog 调大（高并发场景）                  │
+│                │ • 6.0+ 考虑开启 IO 多线程                        │
+├────────────────┼────────────────────────────────────────────────┤
+│  📊 监控告警     │ • INFO 指标监控：内存/连接数/QPS/命中率           │
+│                │ • 慢查询日志定期分析                              │
+│                │ • mem_fragmentation_ratio 碎片率                 │
+│                │ • 大 Key / 热 Key 定期扫描                       │
+└────────────────┴────────────────────────────────────────────────┘
+```
+
+### 13.5 关键监控指标
+
+```bash
+INFO stats
+# instantaneous_ops_per_sec   → QPS
+# keyspace_hits / keyspace_misses → 缓存命中率（hits/(hits+misses)）
+# rejected_connections → 拒绝连接数（maxclients 不够）
+
+INFO clients
+# connected_clients → 当前连接数
+# blocked_clients   → 阻塞的连接数
+
+INFO memory
+# used_memory / used_memory_rss / mem_fragmentation_ratio
+
+INFO replication
+# master_link_status → 主从连接状态
+# master_last_io_seconds_ago → 主从最后一次同步时间差
+
+# 告警阈值建议
+# 内存使用率 > 80%
+# 碎片率 > 1.5
+# 连接数 > maxclients * 80%
+# 缓存命中率 < 90%
+# 主从延迟 > 10 秒
+```
+
+### 13.6 面试标准答法
+
+> Redis 性能优化从几个维度：**Key 设计**上避免大 Key、所有 Key 设 TTL、用 SCAN 替代 KEYS；**数据结构**上 Hash 替代多 String、控制元素数保持紧凑编码；**命令层面**用 Pipeline 批量化、UNLINK 异步删除、禁止 KEYS 等阻塞命令；**持久化**开混合持久化、预留 COW 内存；**运维层面**监控 QPS/命中率/内存碎片率/慢查询，定期扫描大 Key 和热 Key。
+
+### 13.7 常见追问
+
+**Q: Redis 缓存命中率低怎么办？**
+> 1. 检查是否有大量缓存穿透（查不存在的 Key）→ 加布隆过滤器
+> 2. 检查 TTL 是否过短导致频繁过期 → 适当延长
+> 3. 检查 maxmemory 是否过小导致频繁淘汰 → 扩容或优化淘汰策略
+> 4. 检查是否有大量冷数据占用内存 → 改用 LFU 淘汰策略
+
+**Q: Redis 连接数暴涨怎么排查？**
+> `CLIENT LIST` 查看所有连接来源 IP 和空闲时间  
+> `INFO clients` 看 connected_clients  
+> 常见原因：① 连接池配置不当（maxTotal 过大）② 连接泄漏（未 close/归还）③ 慢查询阻塞导致连接等待堆积
 
