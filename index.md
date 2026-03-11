@@ -21,8 +21,12 @@ features:
     linkText: 开始学习 →
   - icon: 🔥
     title: 面试实战
-    details: 34道高频题精选（含追问方向）· 场景题与故障排查 · 每日一题 · HR与软技能
+    details: 34道高频题精选（含追问方向）· 每日一题 · HR与软技能
     link: /面试实战/高频题精选
+  - icon: 🔍
+    title: 问题排查
+    details: 场景题与故障排查 · 线上监控全维度排查 · Java/MySQL/Redis性能排查 · Arthas完全指南
+    link: /问题排查/场景题与故障排查
   - icon: ☕
     title: Java核心
     details: Java基础与JMM · JVM内存模型与GC调优 · 并发编程(AQS/线程池) · 集合框架源码 · Java 8~21新特性

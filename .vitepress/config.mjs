@@ -21,7 +21,6 @@ export default defineConfig({
     siteTitle: 'Java面试知识库',
 
     nav: [
-      { text: '首页', link: '/' },
       { text: '🗺️ 全景提纲', link: '/README' },
       {
         text: 'Java核心',
@@ -85,7 +84,22 @@ export default defineConfig({
           { text: 'DevOps与CI/CD', link: '/云原生/DevOps与CICD' }
         ]
       },
-      { text: '🔥 高频题精选', link: '/面试实战/高频题精选' }
+      {
+        text: '面试实战',
+        items: [
+          { text: '高频题精选', link: '/面试实战/高频题精选' },
+          { text: '每日一题', link: '/面试实战/每日一题' },
+          { text: 'HR与软技能', link: '/面试实战/HR与软技能' }
+        ]
+      },
+      {
+        text: '问题排查',
+        items: [
+          { text: '场景题与故障排查', link: '/问题排查/场景题与故障排查' },
+          { text: '线上问题监控与排查', link: '/问题排查/线上问题监控与排查' },
+          { text: 'Java服务与中间件排查', link: '/问题排查/Java服务与中间件排查' }
+        ]
+      }
     ],
 
     sidebar: [
@@ -102,8 +116,16 @@ export default defineConfig({
         items: [
           { text: '高频题精选', link: '/面试实战/高频题精选' },
           { text: '每日一题', link: '/面试实战/每日一题' },
-          { text: '场景题与故障排查', link: '/面试实战/场景题与故障排查' },
           { text: 'HR与软技能', link: '/面试实战/HR与软技能' }
+        ]
+      },
+      {
+        text: '🔍 问题排查',
+        collapsed: false,
+        items: [
+          { text: '场景题与故障排查', link: '/问题排查/场景题与故障排查' },
+          { text: '线上问题监控与排查', link: '/问题排查/线上问题监控与排查' },
+          { text: 'Java服务与中间件排查', link: '/问题排查/Java服务与中间件排查' }
         ]
       },
       {
