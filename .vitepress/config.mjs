@@ -100,6 +100,15 @@ export default defineConfig({
           { text: 'Java服务与中间件排查', link: '/问题排查/Java服务与中间件排查' },
           { text: 'Arthas 深度指南', link: '/问题排查/Arthas' }
         ]
+      },
+      {
+        text: 'AI与大模型',
+        items: [
+          { text: 'LLM大语言模型', link: '/AI与大模型/LLM大语言模型' },
+          { text: 'RAG检索增强生成', link: '/AI与大模型/RAG检索增强生成' },
+          { text: 'AI Agent智能体', link: '/AI与大模型/AI Agent智能体' },
+          { text: 'AIGC应用开发', link: '/AI与大模型/AIGC应用开发' }
+        ]
       }
     ],
 
@@ -220,6 +229,16 @@ export default defineConfig({
         items: [
           { text: '云原生与K8s', link: '/云原生/云原生与K8s' },
           { text: 'DevOps与CI/CD', link: '/云原生/DevOps与CICD' }
+        ]
+      },
+      {
+        text: '🤖 AI与大模型',
+        collapsed: false,
+        items: [
+          { text: 'LLM大语言模型', link: '/AI与大模型/LLM大语言模型' },
+          { text: 'RAG检索增强生成', link: '/AI与大模型/RAG检索增强生成' },
+          { text: 'AI Agent智能体', link: '/AI与大模型/AI Agent智能体' },
+          { text: 'AIGC应用开发', link: '/AI与大模型/AIGC应用开发' }
         ]
       }
     ],

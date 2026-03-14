@@ -62,6 +62,11 @@
 | [问题排查/线上问题监控与排查.md](问题排查/线上问题监控与排查.md) | 排查方法论/CPU/内存/磁盘/网络/FD/JVM/日志/监控体系/实战场景（12专题）|
 | [问题排查/Java服务与中间件排查.md](问题排查/Java服务与中间件排查.md) | Java服务CPU/内存飙高、接口响应慢、MySQL/Redis性能排查、Arthas完全指南（7专题）|
 | [问题排查/Arthas.md](问题排查/Arthas.md) | Arthas原理/架构/完整命令详解/排查流程/实战案例/面试高频题（9专题）|
+| **AI与大模型/** | |
+| [AI与大模型/LLM大语言模型.md](AI与大模型/LLM大语言模型.md) | Transformer架构/自注意力/训练三阶段/LoRA微调/KV Cache/量化/MoE混合专家 |
+| [AI与大模型/RAG检索增强生成.md](AI与大模型/RAG检索增强生成.md) | 分块策略/Embedding/向量数据库/混合检索/Rerank/HyDE/RAGAS评估 |
+| [AI与大模型/AI Agent智能体.md](AI与大模型/AI%20Agent智能体.md) | ReAct范式/Function Calling/记忆体系/LangGraph/MCP协议/多Agent协作 |
+| [AI与大模型/AIGC应用开发.md](AI与大模型/AIGC应用开发.md) | Spring AI/流式输出/结构化输出/模型部署/Prompt注入防御/AI编程工具 |
 
 ---
 
@@ -443,6 +448,38 @@
 - [x] 观察者模式（Spring ApplicationEvent）→ [设计模式.md](架构设计/设计模式.md#32-观察者模式-)
 - [x] 模板方法模式（AQS / JdbcTemplate）→ [设计模式.md](架构设计/设计模式.md#33-模板方法模式-)
 - [x] 责任链模式（Netty Pipeline / Spring Security）→ [设计模式.md](架构设计/设计模式.md#34-责任链模式-)
+
+---
+
+### 十五、🤖 AI 与大模型 ⭐⭐⭐
+
+#### 15.1 LLM 大语言模型
+- [x] Transformer 架构（Self-Attention / 多头注意力 / RoPE位置编码）→ [LLM大语言模型.md](AI与大模型/LLM大语言模型.md#二transformer-架构-)
+- [x] 训练三阶段（预训练 → SFT → RLHF/DPO）→ [LLM大语言模型.md](AI与大模型/LLM大语言模型.md#三llm-训练流程-)
+- [x] 参数高效微调（LoRA / QLoRA / 低秩假设）→ [LLM大语言模型.md](AI与大模型/LLM大语言模型.md#33-参数高效微调peft)
+- [x] 推理优化（KV Cache / PagedAttention / 量化）→ [LLM大语言模型.md](AI与大模型/LLM大语言模型.md#四llm-推理优化-)
+- [x] Prompt Engineering（CoT / Few-shot / ReAct）→ [LLM大语言模型.md](AI与大模型/LLM大语言模型.md#五prompt-engineering-)
+- [x] MoE 混合专家模型（DeepSeek-V3 架构）→ [LLM大语言模型.md](AI与大模型/LLM大语言模型.md#六moe混合专家模型)
+
+#### 15.2 RAG 检索增强生成
+- [x] RAG 核心流程与架构设计 → [RAG检索增强生成.md](AI与大模型/RAG检索增强生成.md#二rag-架构设计-)
+- [x] 文档分块策略（递归/语义/父子分块）→ [RAG检索增强生成.md](AI与大模型/RAG检索增强生成.md#22-文档分块策略chunking)
+- [x] Embedding 模型与向量数据库选型 → [RAG检索增强生成.md](AI与大模型/RAG检索增强生成.md#23-embedding-模型)
+- [x] 高级 RAG（HyDE / 混合检索 / Rerank / RRF）→ [RAG检索增强生成.md](AI与大模型/RAG检索增强生成.md#三高级-rag-策略-)
+- [x] RAG 评估体系（RAGAS / Faithfulness）→ [RAG检索增强生成.md](AI与大模型/RAG检索增强生成.md#四rag-评估体系-)
+
+#### 15.3 AI Agent 智能体
+- [x] Agent 核心架构（LLM+工具+规划+记忆）→ [AI Agent智能体.md](AI与大模型/AI%20Agent智能体.md#一agent-核心概念-)
+- [x] ReAct 范式与规划策略 → [AI Agent智能体.md](AI与大模型/AI%20Agent智能体.md#21-规划planning)
+- [x] Function Calling 与工具调用 → [AI Agent智能体.md](AI与大模型/AI%20Agent智能体.md#22-工具调用tool-use--function-calling)
+- [x] Agent 框架（LangGraph / CrewAI / MCP 协议）→ [AI Agent智能体.md](AI与大模型/AI%20Agent智能体.md#三主流-agent-框架-)
+- [x] 多 Agent 协作模式 → [AI Agent智能体.md](AI与大模型/AI%20Agent智能体.md#四多-agent-系统-)
+
+#### 15.4 AIGC 应用开发
+- [x] LLM 应用架构与 Spring AI → [AIGC应用开发.md](AI与大模型/AIGC应用开发.md#二llm-应用开发架构-)
+- [x] 流式输出与结构化输出 → [AIGC应用开发.md](AI与大模型/AIGC应用开发.md#三llm-应用关键技术-)
+- [x] 模型部署与GPU显存估算 → [AIGC应用开发.md](AI与大模型/AIGC应用开发.md#四模型部署与服务化-)
+- [x] AI 应用安全（Prompt注入防御 / 内容安全）→ [AIGC应用开发.md](AI与大模型/AIGC应用开发.md#五ai-应用安全与治理-)
 
 ---
 

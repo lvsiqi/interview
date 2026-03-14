@@ -67,4 +67,8 @@ features:
     title: 云原生
     details: Docker/Kubernetes架构与调度 · CI/CD Pipeline · 蓝绿/金丝雀发布 · Service Mesh(Istio)
     link: /云原生/云原生与K8s
+  - icon: 🤖
+    title: AI与大模型
+    details: LLM原理(Transformer/训练/LoRA微调) · RAG检索增强生成 · AI Agent智能体(ReAct/MCP) · AIGC应用开发(Spring AI)
+    link: /AI与大模型/LLM大语言模型
 ---
